@@ -258,7 +258,8 @@ table.rank{width:100%;border-collapse:collapse;min-width:720px}
 .val .u{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 .empty{border:1px dashed var(--line);border-radius:10px;padding:16px;color:var(--muted);font-size:14px}
 .minimap{position:relative;height:340px;border-radius:10px;overflow:hidden;background:var(--map-bg)}
-.minimap canvas{width:100%;height:100%;display:block;cursor:pointer}
+.minimap canvas{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+.minimap .zoombtns{top:10px;bottom:auto}
 
 /* review marks, people, corrections */
 .row.wrap{flex-wrap:wrap}
@@ -1187,10 +1188,10 @@ function cardHTML(n){
   const rows=Object.keys(CL).filter(f=>c.fields[f]&&c.fields[f].length).map(f=>{
     const L=CL[f];
     const vals=c.fields[f].map(v=>{
-      const lab=(L.values&&L.values[v.v])||v.v;
+      const lab=v.v==='other'&&v.p&&v.p.name?v.p.name:((L.values&&L.values[v.v])||v.v);
       const ps=Object.entries(v.p||{}).filter(([k,x])=>x!==''&&x!=null&&k!=='name').map(([k,x])=>fmtParam(k,x)).join(', ');
-      const usage=v.u==='cited_only'?'cited only':v.u;
-      return `<details class="cv"><summary><span class="cvv">${esc(lab)}</span>${ps?`<span class="cvp">${esc(ps)}</span>`:''}<span class="u">${esc(usage)}</span>${RV[v.s]||''}</summary><blockquote>“${esc(v.e)}”<cite>${esc(v.l)}</cite></blockquote></details>`;
+      const usage=v.u==='cited_only'?'cited only':v.u==='used'?'':v.u;
+      return `<details class="cv"><summary><span class="cvv">${esc(lab)}</span>${ps?`<span class="cvp">${esc(ps)}</span>`:''}${usage?`<span class="u">${esc(usage)}</span>`:''}${RV[v.s]||''}</summary><blockquote>“${esc(v.e)}”<cite>${esc(v.l)}</cite></blockquote></details>`;
     }).join('');
     return `<tr><th>${esc(L.label)}</th><td>${vals}</td></tr>`;
   }).join('');
@@ -1292,8 +1293,8 @@ function renderPaper(){
     <section class="psec wide">${figuresHTML(n)}</section>
     <section class="psec wide">
       <h2>Citation neighbourhood</h2>
-      <p class="meta">Time runs left to right: on the left (blue) the ASI papers it cites, on the right (amber) the ASI papers citing it. Up to 100 shown, largest first. Click a dot to open that paper.</p>
-      <div class="minimap wide"><canvas id="miniMap" aria-label="Mini citation map"></canvas></div>
+      <p class="meta">Time runs left to right: on the left (blue) the ASI papers it cites, on the right (amber) the ASI papers citing it. Up to 100 shown, largest first. Scroll to zoom, drag to move, hover a dot for its title, click to open it.</p>
+      <div class="minimap wide"><canvas id="miniMap" aria-label="Mini citation map"></canvas><div class="tip minitip" hidden></div><div class="zoombtns"><button type="button" class="mz" data-z="in" aria-label="Zoom in">+</button><button type="button" class="mz" data-z="out" aria-label="Zoom out">−</button><button type="button" class="mz" data-z="fit">Fit</button></div></div>
       <div class="two even">
         <section class="psec"><h3>Cites within ASI<span class="num">${refs.length}</span></h3>${refs.length?`<ol class="plist sm">${refs.slice(0,10).map(li).join('')}</ol>`:`<p class="meta">${n.nr===0?'OpenAlex has no reference list for this record.':'No references inside the corpus.'}</p>`}</section>
         <section class="psec"><h3>Cited within ASI by<span class="num">${citing.length}</span></h3>${citing.length?`<ol class="plist sm">${citing.slice(0,10).map(li).join('')}</ol>`:'<p class="meta">No citing papers in the corpus yet.</p>'}</section>
@@ -1307,37 +1308,86 @@ function drawMini(n){
   const c=$('#miniMap'); if(!c) return;
   const r=c.getBoundingClientRect(); if(!r.width) return;
   const d=window.devicePixelRatio||1; c.width=Math.round(r.width*d); c.height=Math.round(r.height*d);
-  const ctx=c.getContext('2d'); ctx.setTransform(d,0,0,d,0,0);
+  const W2=r.width, H2=r.height, hh=H2-28, cy=hh/2;
   const refs=OUT[n.i].map(i=>N[i]).sort(byC).slice(0,40), cit=IN[n.i].map(i=>N[i]).sort(byC).slice(0,60);
   const nodes=[{n,rel:0},...refs.map(m=>({n:m,rel:-1})),...cit.map(m=>({n:m,rel:1}))];
   const yrs=nodes.map(o=>o.n.yr);
-  const x=d3.scaleLinear().domain([d3.min(yrs)-0.6,d3.max(yrs)+0.6]).range([34,r.width-34]);
-  const rr=o=>2.6+9*Math.sqrt(o.n.c/maxOf.c);
-  const hh=r.height-30, cy=hh/2;
+  const x=d3.scaleLinear().domain([d3.min(yrs)-0.6,d3.max(yrs)+0.6]).range([34,W2-34]);
+  const rr=o=>(o.rel===0?1:0)+2.6+9*Math.sqrt(o.n.c/maxOf.c);
   let seed=7; const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
-  nodes.forEach(o=>{o.tx=x(o.n.yr);o.x=o.tx;o.y=(rnd()-.5)*140;});
-  nodes[0].fx=nodes[0].tx; nodes[0].fy=0;
-  const s=d3.forceSimulation(nodes).force('x',d3.forceX(o=>o.tx).strength(0.8)).force('y',d3.forceY(0).strength(0.04)).force('col',d3.forceCollide(o=>rr(o)+2)).stop();
-  for(let i=0;i<240;i++) s.tick();
-  nodes.forEach(o=>{o.y=Math.max(-cy+10,Math.min(cy-10,o.y));});
-  ctx.fillStyle=MAPBG; ctx.fillRect(0,0,r.width,r.height);
-  ctx.font='11px "IBM Plex Mono", monospace'; ctx.fillStyle='#6F788B'; ctx.textAlign='center';
-  const ticks=x.ticks(Math.min(8,Math.max(2,Math.round(r.width/80)))).filter(Number.isInteger);
-  ctx.strokeStyle='#1C2230'; ctx.lineWidth=1;
-  for(const t of ticks){ ctx.beginPath(); ctx.moveTo(x(t),6); ctx.lineTo(x(t),hh+4); ctx.stroke(); ctx.fillText(t,x(t),r.height-9); }
-  const c0=nodes[0], Y=o=>cy+o.y;
-  for(const o of nodes.slice(1)){ ctx.strokeStyle=o.rel<0?'rgba(92,200,255,0.35)':'rgba(242,165,65,0.35)'; ctx.beginPath(); ctx.moveTo(c0.x,Y(c0)); ctx.lineTo(o.x,Y(o)); ctx.stroke(); }
-  for(const o of nodes){ ctx.fillStyle=o.rel===0?'#FFFFFF':o.rel<0?'#5CC8FF':'#F2A541'; ctx.beginPath(); ctx.arc(o.x,Y(o),o.rel===0?rr(o)+1:rr(o),0,6.2832); ctx.fill(); }
-  ctx.font='500 11px "IBM Plex Sans", system-ui, sans-serif'; ctx.textBaseline='top';
-  for(const o of [...nodes].sort((a,b)=>b.n.c-a.n.c).slice(0,Math.max(9,Math.round(r.width/75)))){ ctx.fillStyle=o.rel===0?'#FFFFFF':'#C4CCDA'; ctx.fillText(o.n.lab,Math.max(30,Math.min(r.width-30,o.x)),Y(o)+rr(o)+3); }
-  c._nodes=nodes; c._Y=Y;
+  nodes.forEach(o=>{o.tx=x(o.n.yr); o.ty=(rnd()-.5)*(hh-40); o.x=o.tx; o.y=o.ty;});
+  nodes[0].ty=0; nodes[0].fx=nodes[0].tx; nodes[0].fy=0;
+  const sim2=d3.forceSimulation(nodes).force('x',d3.forceX(o=>o.tx).strength(0.9)).force('y',d3.forceY(o=>o.ty).strength(0.06))
+    .force('col',d3.forceCollide(o=>rr(o)+3).iterations(2)).stop();
+  for(let i=0;i<300;i++) sim2.tick();
+  nodes.forEach(o=>{o.y=cy+Math.max(-cy+12,Math.min(cy-12,o.y));});
+  const ctx=c.getContext('2d'), c0=nodes[0];
+  const top=new Set([...nodes].sort((a,b)=>b.n.c-a.n.c).slice(0,Math.max(9,Math.round(W2/75))));
+  const M={nodes,t:d3.zoomIdentity,hover:null,W:W2,H:H2};
+  const R=o=>rr(o)*Math.sqrt(M.t.k);
+  M.render=()=>{
+    const t=M.t, h=M.hover;
+    ctx.setTransform(d,0,0,d,0,0);
+    ctx.fillStyle=MAPBG; ctx.fillRect(0,0,W2,H2);
+    ctx.font='11px "IBM Plex Mono", monospace'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    const span=d3.scaleLinear().domain([x.invert(t.invertX(0)),x.invert(t.invertX(W2))]);
+    ctx.strokeStyle='#1C2230'; ctx.lineWidth=1; ctx.fillStyle='#6F788B';
+    for(const yr of span.ticks(Math.max(2,Math.round(W2/80))).filter(Number.isInteger)){
+      const sx=t.applyX(x(yr)); ctx.beginPath(); ctx.moveTo(sx,4); ctx.lineTo(sx,hh+4); ctx.stroke(); ctx.fillText(yr,sx,H2-9);
+    }
+    for(const o of nodes.slice(1)){
+      const on=h===o; ctx.lineWidth=on?2:1;
+      ctx.strokeStyle=o.rel<0?`rgba(92,200,255,${on?0.95:0.28})`:`rgba(242,165,65,${on?0.95:0.28})`;
+      ctx.beginPath(); ctx.moveTo(t.applyX(c0.x),t.applyY(c0.y)); ctx.lineTo(t.applyX(o.x),t.applyY(o.y)); ctx.stroke();
+    }
+    for(const o of nodes){
+      ctx.globalAlpha=h&&h!==o&&o!==c0?0.45:1;
+      ctx.fillStyle=o.rel===0?'#FFFFFF':o.rel<0?'#5CC8FF':'#F2A541';
+      ctx.beginPath(); ctx.arc(t.applyX(o.x),t.applyY(o.y),R(o),0,6.2832); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    if(h){ ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(t.applyX(h.x),t.applyY(h.y),R(h)+3,0,6.2832); ctx.stroke(); }
+    ctx.font='500 11px "IBM Plex Sans", system-ui, sans-serif'; ctx.textBaseline='top';
+    for(const o of nodes){
+      if(!(top.has(o)||R(o)>6||o===h)) continue;
+      const sx=t.applyX(o.x), sy=t.applyY(o.y);
+      if(sx<-40||sx>W2+40||sy<-10||sy>hh) continue;
+      ctx.fillStyle=o===h||o===c0?'#FFFFFF':'#C4CCDA'; ctx.fillText(o.n.lab,Math.max(30,Math.min(W2-30,sx)),sy+R(o)+3);
+    }
+  };
+  M.hit=(mx,my)=>{ let best=null,bd=Infinity; for(const o of nodes){ const dd=Math.hypot(M.t.applyX(o.x)-mx,M.t.applyY(o.y)-my)-R(o); if(dd<bd){bd=dd;best=o;} } return bd<8?best:null; };
+  c._mini=M;
+  if(!c._wired){ wireMini(c); c._wired=true; }
+  d3.select(c).call(c._zoom.transform,d3.zoomIdentity);
+  M.render();
 }
-document.addEventListener('click',e=>{
-  if(e.target.id!=='miniMap') return;
-  const c=e.target, r=c.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
-  let best=null,bd=14; for(const o of c._nodes||[]){ const dd=Math.hypot(o.x-mx,c._Y(o)-my); if(dd<bd){bd=dd;best=o;} }
-  if(best&&best.n.i!==state.paper) location.hash=hP(best.n.i).slice(1);
-});
+function wireMini(c){
+  const box=c.parentElement, tip=box.querySelector('.minitip');
+  c._zoom=d3.zoom().scaleExtent([0.6,12]).on('zoom',e=>{ c._mini.t=e.transform; c._mini.render(); });
+  d3.select(c).call(c._zoom).on('dblclick.zoom',null);
+  c.addEventListener('mousemove',e=>{
+    const M=c._mini, r=c.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top, o=M.hit(mx,my);
+    if(o!==M.hover){ M.hover=o; M.render(); }
+    c.style.cursor=o?'pointer':'grab';
+    if(!o){ tip.hidden=true; return; }
+    const rel=o.rel===0?'This paper':o.rel<0?'This paper cites it':'It cites this paper';
+    tip.innerHTML=`<b>${esc(o.n.lab)}</b> · ${esc(o.n.t)}<div class="nums">${rel} · ${o.n.c} citations within ASI</div>`;
+    tip.hidden=false;
+    tip.style.left=Math.max(4,Math.min(M.W-tip.offsetWidth-8,mx+14))+'px';
+    tip.style.top=Math.max(4,Math.min(M.H-tip.offsetHeight-8,my+14))+'px';
+  });
+  c.addEventListener('mouseleave',()=>{ c._mini.hover=null; c._mini.render(); tip.hidden=true; });
+  c.addEventListener('click',e=>{
+    const r=c.getBoundingClientRect(), o=c._mini.hit(e.clientX-r.left,e.clientY-r.top);
+    if(o&&o.n.i!==state.paper) location.hash=hP(o.n.i).slice(1);
+  });
+  box.querySelectorAll('.mz').forEach(b=>b.onclick=()=>{
+    const sel=d3.select(c).transition().duration(REDUCED?0:250);
+    if(b.dataset.z==='in') sel.call(c._zoom.scaleBy,1.5);
+    else if(b.dataset.z==='out') sel.call(c._zoom.scaleBy,1/1.5);
+    else sel.call(c._zoom.transform,d3.zoomIdentity);
+  });
+}
 
 /* ---------- boot ---------- */
 setSimNodes(baseSet(),1);
