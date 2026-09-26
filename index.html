@@ -355,6 +355,12 @@ table.rank{width:100%;border-collapse:collapse;min-width:720px}
 .cv blockquote{margin:6px 0 8px 14px;padding:8px 12px;border-left:2px solid var(--accent);background:var(--surface-2);font-size:13.5px;line-height:1.5;color:var(--ink);display:grid;gap:4px;max-width:70ch}
 .cv cite{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--muted)}
 
+/* folding paper card */
+.cardwrap{position:relative}
+.cardwrap.collapsed{overflow:hidden}
+.cardwrap.collapsed::after{content:"";position:absolute;left:0;right:0;bottom:0;height:72px;background:linear-gradient(to bottom,rgba(13,16,22,0),var(--bg));pointer-events:none}
+.cardtoggle{justify-self:start;margin-top:4px}
+
 /* public preview overrides */
 html,body{margin:0}
 img{max-width:100%}
@@ -996,7 +1002,7 @@ function drawHero(){
   if(hcv.width!==Math.round(r.width*d)||hcv.height!==Math.round(r.height*d)){hcv.width=Math.round(r.width*d);hcv.height=Math.round(r.height*d);}
   drawGraph(hcx,r.width,r.height,fitT(r.width,r.height,16,0,0),{labels:false,focus:false,linkAlpha:0.12,dpr:d});
 }
-window.addEventListener('resize',()=>{ if(current==='home') requestDraw(); if(current==='paper') drawMini(N[state.paper]); });
+window.addEventListener('resize',()=>{ if(current==='home') requestDraw(); if(current==='paper'){ drawMini(N[state.paper]); fitCard(); } });
 
 /* ---------- home ---------- */
 $('#homeNew').innerHTML=[...N].sort((a,b)=>(b.d||'').localeCompare(a.d||'')).slice(0,6).map(n=>`<li>${plink(n)}<div class="meta">${metaLine(n)}</div><div class="chips"><span class="chip">${typeLabel(n.ty)}</span><span class="chip num">${esc(n.d||'')}</span></div></li>`).join('');
@@ -1195,9 +1201,40 @@ function cardHTML(n){
     }).join('');
     return `<tr><th>${esc(L.label)}</th><td>${vals}</td></tr>`;
   }).join('');
+  const nv=Object.values(c.fields).reduce((a,v)=>a+v.length,0);
   return `<div class="rvkey"><span>${RV.h} reviewed by a person</span><span>${RV.a} reviewed by AI</span><span class="chip">Basis: ${c.basis==='full_text'?'full text':'abstract'}</span></div>
-    <table class="card-t"><tbody>${rows}</tbody></table>
-    <p class="src">Click a value to see the sentence in the paper it is based on. AI-reviewed means the quote was checked against the paper's text; values can still be wrong.</p>`;
+    <div class="cardwrap" id="cardWrap" data-n="${nv}"><table class="card-t"><tbody>${rows}</tbody></table>
+    <p class="src">Click a value to see the sentence in the paper it is based on. AI-reviewed means the quote was checked against the paper's text; values can still be wrong.</p></div>
+    <button type="button" class="btn ghost sm cardtoggle" id="cardToggle" aria-expanded="false" aria-controls="cardWrap" hidden>Show the full card (${nv} values) ▾</button>`;
+}
+
+function fitCard(){
+  const wrap=$('#cardWrap'), btn=$('#cardToggle'), abs=$('#absSec'); if(!wrap||!btn) return;
+  const n=wrap.dataset.n;
+  if(wrap.dataset.open==='1'){
+    wrap.style.maxHeight=''; wrap.classList.remove('collapsed'); btn.hidden=false;
+    btn.textContent='Show less ▴'; btn.setAttribute('aria-expanded','true'); return;
+  }
+  const narrow=matchMedia('(max-width:900px)').matches;
+  const offset=wrap.getBoundingClientRect().top-wrap.parentElement.getBoundingClientRect().top;
+  const target=narrow?360:Math.max(260,(abs?abs.getBoundingClientRect().height:0)-offset-44);
+  if(wrap.scrollHeight<=target+80){ wrap.style.maxHeight=''; wrap.classList.remove('collapsed'); btn.hidden=true; return; }
+  wrap.style.maxHeight=target+'px'; wrap.classList.add('collapsed'); btn.hidden=false;
+  btn.textContent=`Show the full card (${n} values) ▾`; btn.setAttribute('aria-expanded','false');
+}
+function wireCard(){
+  const wrap=$('#cardWrap'), btn=$('#cardToggle'); if(!wrap||!btn) return;
+  btn.onclick=()=>{
+    const opening=wrap.dataset.open!=='1'; wrap.dataset.open=opening?'1':''; fitCard();
+    if(!opening) btn.scrollIntoView({block:'nearest'});
+  };
+  // opening an evidence quote that sits under the fold unfolds the whole card
+  wrap.addEventListener('toggle',e=>{
+    if(!wrap.classList.contains('collapsed')||!e.target.open) return;
+    if(e.target.getBoundingClientRect().bottom>wrap.getBoundingClientRect().bottom-8){ wrap.dataset.open='1'; fitCard(); }
+  },true);
+  fitCard();
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitCard);
 }
 
 /* ---------- figures (openly licensed only, D19) and contact (D20) ---------- */
@@ -1287,7 +1324,7 @@ function renderPaper(){
       <div class="tile"><span>Within-ASI citations per year</span><b>${n.py.toFixed(1)}</b></div>
     </div>
     <div class="two">
-      <section class="psec"><h2>Abstract</h2>${abstract}</section>
+      <section class="psec" id="absSec"><h2>Abstract</h2>${abstract}</section>
       <section class="psec"><h2>Paper card</h2>${cardHTML(n)||card}</section>
     </div>
     <section class="psec wide">${figuresHTML(n)}</section>
@@ -1302,6 +1339,7 @@ function renderPaper(){
     </section>
     <section class="psec wide">${correction('paper page')}</section>`;
   drawMini(n);
+  wireCard();
   if(FM[n.id]) loadFigs(n);
 }
 function drawMini(n){
