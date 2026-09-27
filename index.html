@@ -1305,7 +1305,7 @@ function renderPaper(){
   const ab=AC[n.i].ab;
   const abstract=ab
     ?`<p class="prose">${esc(ab)}</p><p class="src">Abstract of the arXiv version, arXiv:${esc(AC[n.i].a)} (arXiv metadata, CC0). The journal version's abstract can differ slightly.</p>`
-    :`<div class="empty">No arXiv version of this paper was found, so its abstract is not shown here yet. It can be read on the publisher's page (link above).</div>`;
+    :`<div class="empty">The official abstract from the publisher (via Crossref or OpenAlex) is shown here on the live site. It is left out of this private mockup, which only embeds arXiv abstracts because those are free to reuse.</div>`;
   $('#paperArt').innerHTML=`
     <div class="paper-head">
       <span class="kick">${typeLabel(n.ty)} · ${esc(n.d||n.yr)}${n.vers>1?` · ${n.vers} records merged`:''}</span>
