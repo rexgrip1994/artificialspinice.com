@@ -625,17 +625,28 @@ function accessButtons(n){
   if(a.a) out.push(`<a class="btn${out.length?' ghost':''}" href="https://arxiv.org/abs/${esc(a.a)}" target="_blank" rel="noopener">Preprint · arXiv:${esc(a.a)} ↗</a><a class="btn ghost" href="https://arxiv.org/pdf/${esc(a.a)}" target="_blank" rel="noopener">Preprint PDF ↗</a>`);
   if(fu&&a.f.ver!=='publishedVersion') out.push(`<a class="btn${out.length?' ghost':''}" href="${esc(fu)}" target="_blank" rel="noopener">${VER[a.f.ver]||'Free copy'}${a.f.host?` · ${esc(a.f.host)}`:''} ↗</a>`);
   if(n.doi) out.push(`<a class="btn ghost" href="https://doi.org/${esc(n.doi)}" target="_blank" rel="noopener">Publisher page (DOI) ↗</a>`);
+  if(a.si&&a.si.url) out.push(`<a class="btn ghost" href="${esc(a.si.url)}" target="_blank" rel="noopener">Supplementary information${a.si.host?` · ${esc(a.si.host)}`:''} ↗</a>`);
   const lic=a.f&&a.f.lic?`<span class="chip">Licence: ${esc(a.f.lic)}</span>`:'';
   const none=n.ac==='closed'?`<p class="meta">No free version found in OpenAlex, Semantic Scholar or arXiv. Know of one? Email <span class="mail">${MAIL}</span></p>`:'';
   return `<div class="links">${out.join('')}${lic}</div>${none}`;
 }
 
 /* site-wide search */
+// tokenized AND match: every word in the query must appear somewhere in the
+// haystack, in any order (a plain haystack.includes(query) fails whenever the
+// query's words aren't exactly adjacent and in that order in the source text,
+// e.g. "monopole Dirac" against a title that has them in the other order).
+function matchesQuery(haystack,q){
+  const words=q.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  if(!words.length) return true;
+  const h=haystack.toLowerCase();
+  return words.every(w=>h.includes(w));
+}
 const gq=$('#gq'), gres=$('#gres');
 function gsearch(){
-  const q=gq.value.trim().toLowerCase();
+  const q=gq.value.trim();
   if(q.length<2){gres.hidden=true;return;}
-  const papers=N.filter(n=>(n.t+' '+n.au+' '+n.v+' '+n.yr).toLowerCase().includes(q)).sort(byC).slice(0,10);
+  const papers=N.filter(n=>matchesQuery(n.t+' '+n.au+' '+n.v+' '+n.yr,q)).sort(byC).slice(0,10);
   let h='';
   if(papers.length) h+=`<div class="gh">Papers</div>`+papers.map(n=>`<a href="${hP(n.i)}"><b>${esc(n.lab)}</b> ${esc(n.t)}</a>`).join('');
   gres.innerHTML=h||'<div class="gh">Nothing matches</div>';
@@ -950,9 +961,9 @@ function focusNode(i){ ensureVisible(i); select(i); if(!G.local) centerOn(i); }
 /* controls */
 const sIn=$('#mapSearch'), sRes=$('#mapSearchRes');
 sIn.addEventListener('input',()=>{
-  const q=sIn.value.trim().toLowerCase();
+  const q=sIn.value.trim();
   if(q.length<2){sRes.hidden=true;return;}
-  const hits=N.filter(n=>(n.t+' '+n.au+' '+n.lab).toLowerCase().includes(q)).sort(byC).slice(0,8);
+  const hits=N.filter(n=>matchesQuery(n.t+' '+n.au+' '+n.lab,q)).sort(byC).slice(0,8);
   sRes.innerHTML=hits.length?hits.map(n=>`<button data-go="${n.i}" type="button"><b>${esc(n.lab)}</b>${esc(n.t)}</button>`).join(''):'<div class="none">No paper matches</div>';
   sRes.hidden=false;
 });
@@ -1012,8 +1023,7 @@ $('#homeSearch').addEventListener('submit',e=>{ e.preventDefault(); B.q=$('#home
 /* ---------- browse ---------- */
 const B={q:'',jn:null,tp:new Set(),lt:new Set(),ty:new Set(),ac:new Set(),y0:minYear,y1:2026,sort:'c',shown:25};
 function passes(n,skip){
-  const q=B.q.toLowerCase();
-  if(q&&!(n.t+' '+n.au+' '+n.v).toLowerCase().includes(q)) return false;
+  if(B.q&&!matchesQuery(n.t+' '+n.au+' '+n.v,B.q)) return false;
   if(skip!=='tp'&&B.tp.size&&!B.tp.has(n.tp||'_')) return false;
   if(skip!=='lt'&&B.lt.size&&!B.lt.has(n.lt||'_')) return false;
   if(skip!=='ty'&&B.ty.size&&!B.ty.has(typeKey(n.ty))) return false;
@@ -1302,10 +1312,12 @@ function renderPaper(){
       
       <table class="card-t"><tbody>${WANG_CARD.map(([f,vs])=>`<tr><th>${f}</th><td>${vs.map(([v,u,r])=>`<span class="val">${esc(v)}<span class="u">${u}</span>${RV[r]}</span>`).join('')}</td></tr>`).join('')}</tbody></table>`
     :`<div class="empty">Coming soon: lattice, material and island geometry, fabrication, state preparation, techniques, simulation methods and observables, each backed by a quote from the paper and marked as reviewed by AI or by a person.</div>`;
-  const ab=AC[n.i].ab;
+  const ab=AC[n.i].ab, ab2=AC[n.i].ab2, absrc=AC[n.i].absrc;
   const abstract=ab
     ?`<p class="prose">${esc(ab)}</p><p class="src">Abstract of the arXiv version, arXiv:${esc(AC[n.i].a)} (arXiv metadata, CC0). The journal version's abstract can differ slightly.</p>`
-    :`<div class="empty">The official abstract from the publisher (via Crossref or OpenAlex) is shown here on the live site. It is left out of this private mockup, which only embeds arXiv abstracts because those are free to reuse.</div>`;
+    :ab2
+    ?`<p class="prose">${esc(ab2)}</p><p class="src">Official abstract via ${esc(absrc||'the publisher')}. Publisher abstracts are usually copyrighted; shown here as fair-use bibliographic description.</p>`
+    :`<div class="empty">No abstract could be found for this paper (checked OpenAlex, Crossref and the publisher page). <a href="mailto:${MAIL}">Let us know</a> if you have a source.</div>`;
   $('#paperArt').innerHTML=`
     <div class="paper-head">
       <span class="kick">${typeLabel(n.ty)} · ${esc(n.d||n.yr)}${n.vers>1?` · ${n.vers} records merged`:''}</span>
