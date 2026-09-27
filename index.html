@@ -51,6 +51,8 @@ p{margin:0}
 #nav a:hover{color:var(--ink);background:var(--surface-2)}
 #nav a[aria-current="page"]{color:var(--ink);background:var(--surface-2);box-shadow:inset 0 -2px 0 var(--accent)}
 #nav a.plan{margin-left:auto;color:var(--note-key)}
+/* the nav wraps to a second row wherever one row cannot hold all pages (no hidden, scroll-only links) */
+@media (max-width:860px){#nav{flex-wrap:wrap;overflow:visible;padding-block:4px}#nav a{padding:6px 8px;font-size:13.5px}}
 @media (max-width:640px){.brand .word{display:none}}
 .mockbar{max-width:1320px;margin:12px auto 0;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
 .mockbar .tag{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;padding:2px 7px;border:1px solid var(--line);border-radius:4px}
@@ -90,6 +92,7 @@ select,input[type=search],input[type=text]{font:inherit;font-size:14px;padding:8
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:3px}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:1px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--dot,var(--faint));flex:none}
+.chip.guess{border-style:dashed}
 .nums{font-family:var(--mono);font-size:12px;color:var(--muted)}
 
 /* home */
@@ -186,14 +189,33 @@ select,input[type=search],input[type=text]{font:inherit;font-size:14px;padding:8
 .fopt{display:flex;align-items:center;gap:8px;padding:2px 0;cursor:pointer}
 .fopt input{accent-color:var(--accent);margin:0}
 .fopt .c{margin-left:auto;color:var(--faint);font-family:var(--mono);font-size:12px}
-.fgroup.off{opacity:.6}
-.fgroup.off .fopt{cursor:not-allowed}
+.fgroup:not(.open) .fopt.xtra{display:none}
+.fmore{font:inherit;font-size:12.5px;background:none;border:0;padding:2px 0;color:var(--accent);cursor:pointer}
+.fcards{border-top:1px solid var(--line);padding-top:12px}
 .hint{font-size:12px;color:var(--faint);margin-top:2px}
 .yrsel{display:flex;gap:6px;align-items:center}
 .yrsel select{flex:1;padding:6px 8px}
-.res-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.res-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--line);scroll-margin-top:130px}
 .more{margin-top:14px}
-@media (max-width:760px){.facets{grid-template-columns:repeat(2,minmax(0,1fr))}.facets .fsearch{grid-column:1/-1}}
+/* browse: search on top, filters collapsible on phones */
+.fcol{display:grid;gap:14px;align-content:start}
+.fsearch input{width:100%}
+.fjump{display:none}
+.fdetails>summary{display:none}
+.fcol:has(.fdetails:not([open])) #toRes{display:none}
+@media (max-width:760px){
+  .facets{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .facets .fcards,.facets .fyear{grid-column:1/-1}
+  .fyear .yrsel{max-width:340px}
+  .fjump{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 0}
+  .fdetails{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .fdetails>summary{display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .fdetails>summary::-webkit-details-marker{display:none}
+  .fdetails>summary::after{content:'\25BE';margin-left:auto}
+  .fdetails[open]>summary::after{content:'\25B4'}
+  .fdetails[open]>summary{margin-bottom:12px}
+  .fact{color:var(--accent);text-transform:none;letter-spacing:0}
+}
 
 /* rankings */
 .rank-ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
@@ -236,6 +258,11 @@ table.rank{width:100%;border-collapse:collapse;min-width:720px}
 .paper-head{display:grid;gap:10px;padding-bottom:20px;border-bottom:1px solid var(--line)}
 .paper-head h1{font-size:clamp(26px,3vw,36px)}
 .meta.big{font-size:14.5px}
+.meta [title]{text-decoration:underline dotted var(--faint);text-underline-offset:3px}
+.vers{font-size:13.5px;color:var(--muted)}
+.vers summary{cursor:pointer;width:fit-content;max-width:100%}
+.vers ul{margin:6px 0 0;padding-left:18px;display:grid;gap:3px}
+.vers li{min-width:0;overflow-wrap:anywhere}
 .badge{display:inline-flex;gap:8px;align-items:center;font-size:13px;padding:3px 11px;border-radius:999px;border:1px solid var(--accent);color:var(--accent);width:fit-content;max-width:100%}
 .badge::before{content:"";width:7px;height:7px;transform:rotate(45deg);background:currentColor;flex:none}
 .links{display:flex;flex-wrap:wrap;gap:8px}
@@ -250,12 +277,9 @@ table.rank{width:100%;border-collapse:collapse;min-width:720px}
 .stack section{display:grid;gap:10px}
 .stack h3 .num{font-size:14px;color:var(--muted);margin-left:4px}
 .prose{font-family:var(--serif);font-size:17px;line-height:1.55;max-width:65ch}
-.illus{font-size:12.5px;color:var(--note-ink);background:var(--note-bg);border:1px solid var(--note-line);padding:6px 10px;border-radius:6px}
 .card-t{width:100%;border-collapse:collapse;font-size:14px}
 .card-t th{text-align:left;font-weight:500;color:var(--muted);padding:9px 12px 9px 0;vertical-align:top;width:32%;border-bottom:1px solid var(--line);font-size:13px}
 .card-t td{padding:7px 0;border-bottom:1px solid var(--line);vertical-align:top}
-.val{display:inline-flex;align-items:baseline;gap:8px;margin:2px 6px 2px 0;padding:2px 9px;border-radius:5px;background:var(--surface-2);font-size:13.5px}
-.val .u{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 .empty{border:1px dashed var(--line);border-radius:10px;padding:16px;color:var(--muted);font-size:14px}
 .minimap{position:relative;height:340px;border-radius:10px;overflow:hidden;background:var(--map-bg)}
 .minimap canvas{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
@@ -298,7 +322,10 @@ table.rank{width:100%;border-collapse:collapse;min-width:720px}
 .gres a b{color:var(--ink);font-weight:500;margin-right:4px}
 .gres a:hover,.gres a:focus-visible{background:var(--surface-2)}
 @media (max-width:1180px){.top-in{flex-wrap:wrap;row-gap:0}.gsearch{order:3;width:100%;padding-bottom:10px}}
-.readbox{display:grid;gap:8px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--surface)}
+.readbox{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--surface)}
+/* long link labels (repository names) wrap instead of widening the page on phones */
+.paper-head{grid-template-columns:minmax(0,1fr)}
+.links .btn{white-space:normal;overflow-wrap:anywhere;max-width:100%}
 .readbox .kick{display:flex;align-items:center;gap:8px}
 .src{font-size:12.5px;color:var(--faint);margin-top:6px}
 
@@ -325,7 +352,8 @@ table.rank{width:100%;border-collapse:collapse;min-width:720px}
 .disc h1{font-size:clamp(28px,3.4vw,40px)}
 
 /* paper page layout, figures, contact */
-.psec{display:grid;gap:10px;align-content:start}
+.psec{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-content:start}
+.psec .prose{overflow-wrap:anywhere}
 .psec h3 .num{font-size:14px;color:var(--muted);margin-left:6px}
 .wide{margin-top:36px}
 .two.even{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
@@ -400,10 +428,10 @@ img{max-width:100%}
     <nav id="nav" aria-label="Pages">
       <a href="#home">Home</a><a href="#map">Map</a><a href="#browse">Browse</a><a href="#rankings">Rankings</a><a href="#timeline">Timeline</a><a href="#stats">Statistics</a><a href="#disclaimer">Disclaimer</a>
     </nav>
-    <div class="gsearch" role="search"><input type="search" id="gq" placeholder="Search papers by title or author   /" autocomplete="off" aria-label="Search papers by title or author"><div class="gres" id="gres" hidden></div></div>
+    <div class="gsearch" role="search"><input type="search" id="gq" placeholder="Title, author, journal or year" autocomplete="off" aria-label="Search papers by title, author, journal or year (shortcut: /)"><div class="gres" id="gres" hidden></div></div>
   </div>
 </header>
-<div class="mockbar"><span class="tag">Live</span><span id="mockText"></span><span>Paper cards last updated September 27, 2026.</span></div>
+<div class="mockbar"><span class="tag">Live</span><span id="mockText"></span><span>Paper cards last updated September 28, 2026.</span></div>
 
 <main>
 <!-- HOME -->
@@ -414,7 +442,7 @@ img{max-width:100%}
       <h1>The artificial spin ice literature, mapped by who cites whom.</h1>
       <p class="lede" id="homeLede"></p>
       <form class="searchbar" id="homeSearch" role="search">
-        <input type="search" id="homeQ" placeholder="Search titles and authors: kagome, Shakti, Heyderman…" aria-label="Search the library">
+        <input type="search" id="homeQ" placeholder="Title, author, journal or year" aria-label="Search the library by title, author, journal or year">
         <button class="btn" type="submit">Search</button>
       </form>
       <dl class="stats" id="homeStats"></dl>
@@ -422,7 +450,7 @@ img{max-width:100%}
     <a class="hero-map" href="#map" aria-label="Open the citation map"><canvas id="heroMap"></canvas><span>Open the citation map →</span></a>
   </div>
   <div class="home-cols">
-    <section><div class="h-row"><h2>New in the library</h2></div><p class="sub">Latest additions, newest first</p><ol class="plist sm" id="homeNew"></ol></section>
+    <section><div class="h-row"><h2>New in the library</h2></div><p class="sub">Newest papers by publication date</p><ol class="plist sm" id="homeNew"></ol></section>
     <section><h2>Trending in the field</h2><p class="sub">Most cited by ASI papers from 2024–2026</p><ol class="plist sm" id="homeTrend"></ol></section>
   </div>
 </section>
@@ -433,7 +461,7 @@ img{max-width:100%}
   <div class="map-shell">
     <div class="panel map-ctrl" id="mapCtrl">
       <div class="search">
-        <input type="search" id="mapSearch" placeholder="Find a paper or author…" autocomplete="off" aria-label="Find a paper on the map">
+        <input type="search" id="mapSearch" placeholder="Title, author, journal or year" autocomplete="off" aria-label="Find a paper on the map by title, author, journal or year">
         <div class="sres" id="mapSearchRes" hidden></div>
       </div>
       <div><span class="lab">Layout</span><div class="seg" id="layoutBy"><button data-v="net" class="on">Network</button><button data-v="time">By year</button></div></div>
@@ -459,12 +487,15 @@ img{max-width:100%}
 
 <!-- BROWSE -->
 <section id="v-browse" class="view" hidden>
-  <div class="page-head"><h1>Browse the library</h1><p>Filter by topic, lattice, technique, material, state preparation and more. Every paper is classified by AI; values you have checked carry a person-reviewed mark.</p></div>
+  <div class="page-head"><h1>Browse the library</h1><p id="browseLede"></p></div>
   <div class="with-notes">
     <div class="browse">
-      <aside class="facets" id="facets" aria-label="Filters"></aside>
+      <div class="fcol">
+        <div class="fsearch" role="search"><input type="search" id="fq" placeholder="Title, author, journal or year" autocomplete="off" aria-label="Search by title, author, journal or year"><p class="fjump meta"><span id="resN2"></span><button type="button" class="btn ghost sm" id="toRes">Show results ↓</button></p></div>
+        <details class="fdetails" id="fdetails" open><summary>Filters<span class="fact" id="fActive"></span></summary><aside class="facets" id="facets" aria-label="Filters"></aside></details>
+      </div>
       <div>
-        <div class="res-bar"><span class="row wrap"><span id="resN" class="meta"></span><span id="jnFilter" hidden></span></span><label class="row meta" for="sortBy">Sort <select id="sortBy"><option value="c">Citations within ASI</option><option value="r">Trending 2024–2026</option><option value="new">Newest</option><option value="g">Global citations</option></select></label></div>
+        <div class="res-bar"><span class="row wrap"><span id="resN" class="meta"></span><span id="jnFilter" hidden></span><button type="button" class="btn ghost sm" id="clearF" hidden>Clear all filters</button></span><label class="row meta" for="sortBy">Sort <select id="sortBy"><option value="rel">Best match</option><option value="c">Citations within ASI</option><option value="r">Trending 2024–2026</option><option value="new">Newest</option><option value="g">Global citations</option></select></label></div>
         <ol class="plist" id="resList"></ol>
         <button class="btn ghost more" id="more" type="button">Show more</button>
       </div>
@@ -480,7 +511,7 @@ img{max-width:100%}
       <div class="rank-ctl">
         <div class="seg" id="rankMetric" role="group" aria-label="Ranking metric"><button data-v="c" class="on">Within ASI</button><button data-v="py">Per year</button><button data-v="r">Trending</button><button data-v="g">Global</button></div>
         <select id="rankSince" aria-label="Publication years"><option value="0">All years</option><option value="2016">Published 2016+</option><option value="2021">Published 2021+</option></select>
-        <select id="rankType" aria-label="Publication type"><option value="all">Research papers</option><option value="review" disabled>Reviews (coming)</option><option value="dissertation">Theses</option><option value="preprint">Preprints</option></select>
+        <select id="rankType" aria-label="Publication type"><option value="all">Research papers</option><option value="review">Reviews</option><option value="dissertation">Theses</option><option value="preprint">Preprints</option></select>
       </div>
       <div class="tablewrap"><table class="rank"><thead><tr><th>#</th><th>Paper</th><th class="n" data-k="c">Within ASI</th><th class="n" data-k="py">Per year</th><th class="n" data-k="r">2024–26</th><th class="n" data-k="g">Global · rank</th></tr></thead><tbody id="rankBody"></tbody></table></div>
     </div>
@@ -489,7 +520,7 @@ img{max-width:100%}
 
 <!-- TIMELINE -->
 <section id="v-timeline" class="view" hidden>
-  <div class="page-head"><h1>Timeline</h1><p>Growth of the field and the results that shaped it. Milestones are flagged and annotated by hand.</p></div>
+  <div class="page-head"><h1>Timeline</h1><p>Growth of the field and the results that shaped it. Milestones are flagged and annotated by hand. Years are journal issue years, as papers are cited; the paper page also shows the first-online date.</p></div>
   <div class="with-notes">
     <div>
       <div class="chartbox"><div class="chart" id="chart"></div><div class="chartkey"><span><i style="background:var(--accent)"></i>Papers per year in the corpus</span><span><i style="background:var(--plus);transform:rotate(45deg)"></i>Year with a milestone</span><span><i style="background:var(--accent);opacity:.4"></i>2026 so far</span></div></div>
@@ -550,6 +581,7 @@ img{max-width:100%}
 
 <script src="assets/d3.v7.9.0.min.js"></script>
 <script src="data.js"></script>
+<script src="versions.js"></script>
 <script src="authors.js"></script>
 <script src="access.js"></script>
 <script src="figmeta.js"></script>
@@ -564,12 +596,18 @@ const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const MAPBG='#0B0E14';
 const MAIL='info@artificialspinice.com';
 
-const TOPIC={ground_state_order:['Ground states & order','#6D9EEB'],thermal_dynamics:['Thermal dynamics','#F28E2B'],phase_transitions:['Phase transitions','#8CD17D'],field_driven:['Field-driven reversal','#76B7B2'],emergent_charges:['Monopoles & charges','#E15759'],vertex_frustration:['Vertex frustration','#A0CBE8'],connected_networks:['Connected networks','#FF9DA7'],magnonics:['Magnonics','#59A14F'],computation:['Computation','#B07AA1'],three_d:['3D ASI','#EDC948'],other_platforms:['Other artificial ices','#9C755F']};
-const LATT={square:['Square','#6D9EEB'],kagome:['Kagome','#F28E2B'],three_d:['3D','#EDC948'],quasicrystal:['Quasicrystal','#B07AA1'],pinwheel:['Pinwheel','#76B7B2'],shakti:['Shakti','#E15759'],tetris:['Tetris','#FF9DA7'],santa_fe:['Santa Fe','#9C755F']};
+/* topic and lattice keys follow the paper-card vocabulary (CARD_LABELS); title-keyword guesses use a subset of them */
+const TOPIC={ground_state_order:['Ground states & order','#6D9EEB'],thermal_dynamics:['Thermal dynamics','#F28E2B'],phase_transitions:['Phase transitions','#8CD17D'],field_driven:['Field-driven reversal','#76B7B2'],emergent_charges:['Monopoles & charges','#E15759'],fragmentation:['Fragmentation & spin liquids','#D7B5A6'],vertex_frustration:['Vertex frustration','#A0CBE8'],state_control:['State control & writing','#FFBE7D'],disorder:['Disorder & finite size','#B6992D'],interaction_engineering:['Interaction engineering','#499894'],connected_networks:['Connected networks','#FF9DA7'],magnonics:['Magnonics','#59A14F'],computation:['Computation','#B07AA1'],three_d:['3D ASI','#EDC948'],novel_spins:['Beyond Ising spins','#D4A6C8'],natural_spin_ice:['Natural spin ice','#D37295'],other_platforms:['Other artificial ices','#9C755F']};
+const LATT={square:['Square','#6D9EEB'],rectangular:['Rectangular','#A0CBE8'],square_height_offset:['Square (height offset)','#499894'],kagome:['Kagome','#F28E2B'],pinwheel:['Pinwheel','#76B7B2'],shakti:['Shakti','#E15759'],tetris:['Tetris','#FF9DA7'],santa_fe:['Santa Fe','#9C755F'],brickwork:['Brickwork','#8CD17D'],triangular:['Triangular','#D4A6C8'],quasicrystal:['Quasicrystal','#B07AA1'],three_d:['3D','#EDC948'],chain_or_cluster:['Chains/clusters','#FFBE7D'],other:['Other lattice','#BAB0AC']};
+const LATT_MAP={diamond_3d:'three_d',trident:'other',cairo:'other',quadrupole:'other'};
+const lattKey=v=>LATT[v]?v:(LATT_MAP[v]||'other');
 const NONE=['Unclassified','#4F5769'];
-const TYPES={article:'Article',preprint:'Preprint',dissertation:'Thesis','conference-paper':'Conference paper','book-chapter':'Book chapter'};
+const TYPES={article:'Article',review:'Review',preprint:'Preprint',dissertation:'Thesis','conference-paper':'Conference paper','conference-abstract':'Conference abstract','book-chapter':'Book chapter',report:'Report'};
 const typeLabel=t=>TYPES[t]||'Other';
 const typeKey=t=>TYPES[t]?t:'other';
+/* reviews are flagged by the pipeline (rv); the publication form (ty) is kept for chapters, preprints etc. */
+const typeText=n=>n.rv?(['article','review'].includes(n.ty)?'Review':'Review · '+typeLabel(n.ty)):typeLabel(n.ty);
+const typeFacet=n=>n.rv?'review':typeKey(n.ty);
 const yearColor=y=>d3.interpolateViridis(0.12+0.88*Math.max(0,Math.min(1,(y-2006)/20)));
 const YX=yr=>(yr-2016)*70;
 
@@ -584,7 +622,7 @@ const byC=(a,b)=>b.c-a.c||b.g-a.g;
 [...N].sort((a,b)=>b.g-a.g).forEach((n,k)=>n.gr=k+1);
 [...N].sort(byC).forEach((n,k)=>n.cr=k+1);
 const WANG=N.findIndex(n=>n.id==='W1981179226');
-const state={paper:WANG>=0?WANG:[...N].sort(byC)[0].i,prof:{kind:'group',i:0}};
+const state={paper:WANG>=0?WANG:[...N].sort(byC)[0].i};
 const MS=N.filter(n=>n.ms).sort((a,b)=>(a.d||'').localeCompare(b.d||''));
 const orphN=N.filter(n=>n.deg===0).length;
 const noRefs=N.filter(n=>n.nr===0).length;
@@ -596,6 +634,49 @@ const minYear=d3.min(N,n=>n.yr);
 const AU=typeof AUTHORS!=='undefined'?AUTHORS:N.map(n=>[n.fa,n.la].filter(Boolean));
 N.forEach(n=>{n.au=AU[n.i].join(', ');});
 
+/* merged records (versions.js): old record ids stay valid as links */
+const byWid=new Map(N.map(n=>[n.id,n.i]));
+const AL=typeof ALIASES!=='undefined'?ALIASES:{}, VS=typeof VERSIONS!=='undefined'?VERSIONS:{};
+
+/* paper cards (D8, D10); a card saved under a merged record's old id belongs to the record that was kept */
+const CD=typeof CARDS!=='undefined'?CARDS:{}, CL=typeof CARD_LABELS!=='undefined'?CARD_LABELS:{};
+const CARDN=new Map();
+N.forEach(n=>{ if(CD[n.id]) CARDN.set(n.i,CD[n.id]); });
+for(const [o,t] of Object.entries(AL)) if(CD[o]&&byWid.has(t)&&!CARDN.has(byWid.get(t))) CARDN.set(byWid.get(t),CD[o]);
+const nCarded=CARDN.size;
+const anyPerson=[...CARDN.values()].some(c=>Object.values(c.fields).some(vs=>vs.some(v=>v.s==='h')));
+const usedVals=(n,f)=>{ const c=CARDN.get(n.i); return c&&c.fields[f]?c.fields[f].filter(v=>v.u==='used'):[]; };
+
+/* topic and lattice: the card's "used" values when it has them, else the title-keyword guess (tpg/ltg: guessed).
+   tp1/lt1 pick one value for the map colour, preferring the title guess when the card agrees with it. */
+const pick=(ks,guess)=>ks.includes(guess)?guess:(ks.find(k=>k!=='other')||ks[0]);
+N.forEach(n=>{
+  const ct=[...new Set(usedVals(n,'topics').map(v=>v.v).filter(k=>TOPIC[k]))];
+  const cl=[...new Set(usedVals(n,'lattice').map(v=>lattKey(v.v)))];
+  n.tps=ct.length?ct:(TOPIC[n.tp]?[n.tp]:[]); n.tpg=!ct.length&&n.tps.length>0; n.tp1=n.tps.length?pick(n.tps,n.tp):null;
+  n.lts=cl.length?cl:(LATT[n.lt]?[n.lt]:[]); n.ltg=!cl.length&&n.lts.length>0; n.lt1=n.lts.length?pick(n.lts,n.lt):null;
+});
+
+/* search: one folded word index per paper (title, all authors, venue, both years, the card's lattice),
+   shared by the header, Home, Browse and the map. Every query word must start a word (AND);
+   ranking = number of query words that match a whole word, then citations within ASI. */
+const FOLD={'ø':'o','æ':'ae','œ':'oe','ß':'ss','ł':'l','đ':'d','ı':'i','þ':'th','ð':'d'};
+const CONF={'ο':'o','α':'a','ε':'e','ι':'i','κ':'k','ν':'v','ρ':'p','τ':'t','υ':'u','о':'o','а':'a','е':'e','р':'p','с':'c','х':'x','у':'y','і':'i','м':'m','к':'k','в':'b','н':'h','т':'t'};
+function fold(s){
+  return String(s==null?'':s).toLowerCase().replace(/[øæœßłđıþð]/g,c=>FOLD[c]).normalize('NFKD').replace(/\p{M}+/gu,'')
+    .replace(/[^\p{L}\p{N}]+/gu,' ')
+    .replace(/\S+/g,w=>/[a-z]/.test(w)&&/[Ͱ-ϿЀ-ӿ]/.test(w)?w.replace(/[Ͱ-ϿЀ-ӿ]/g,c=>CONF[c]||c):w).trim();
+}
+const qTokens=q=>{ const f=fold(q); return f?f.split(' '):[]; };
+const matchQ=(n,toks)=>toks.every(t=>n.sx.includes(' '+t));
+const relQ=(n,toks)=>toks.reduce((a,t)=>a+(n.sx.includes(' '+t+' ')?1:0),0);
+const byRel=toks=>(a,b)=>relQ(b,toks)-relQ(a,toks)||byC(a,b);
+function searchN(q){ const toks=qTokens(q); return toks.length?N.filter(n=>matchQ(n,toks)).sort(byRel(toks)):null; }
+// the card's lattice as a short name only: the long vocabulary labels ("Kagome (islands on honeycomb edges)") and the free-text
+// names of "other" lattices ("…, not kagome geometry") would make words like islands, edges, on or kagome match papers that do not use them
+const lattWords=v=>v.v==='other'?String((v.p&&v.p.name)||'').replace(/\s*[(,;:].*$/,''):LATT[v.v]?LATT[v.v][0]:String((CL.lattice&&CL.lattice.values&&CL.lattice.values[v.v])||v.v).replace(/\s*[(/].*$/,'');
+N.forEach(n=>{ n.sx=' '+fold([n.t,n.au,n.v,n.yr,n.yo||'',...usedVals(n,'lattice').map(lattWords)].join(' '))+' '; });
+
 function authorsTxt(n){
   if(n.na>2) return `${esc(n.fa)} … ${esc(n.la)} <span class="faint">(${n.na} authors)</span>`;
   if(n.na===2) return `${esc(n.fa)}, ${esc(n.la)}`;
@@ -605,84 +686,108 @@ const metaLine=n=>`${authorsTxt(n)} · ${n.v?`<i>${esc(n.v)}</i> · `:''}${n.yr}
 const hP=i=>'#paper-'+N[i].id;
 const plink=n=>`<a class="plink" href="${hP(n.i)}">${esc(n.t)}</a>`;
 const li=n=>`<li>${plink(n)}<div class="meta">${metaLine(n)}</div></li>`;
-function topicBar(papers){
-  const cnt=new Map(); for(const k of papers){ const t=N[k].tp||'_'; cnt.set(t,(cnt.get(t)||0)+1); }
-  const segs=[...cnt.entries()].sort((a,b)=>(a[0]==='_')-(b[0]==='_')||b[1]-a[1]);
-  const tot=papers.length||1;
-  return `<div class="topicbar" role="img" aria-label="Topic mix">${segs.map(([t,v])=>`<i style="width:${100*v/tot}%;background:${(TOPIC[t]||NONE)[1]}" title="${(TOPIC[t]||NONE)[0]}: ${v}"></i>`).join('')}</div>`;
+/* dates (D7): yr = journal issue year (as cited); d = first-online date at the precision it is known (dp) */
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(n){
+  const [y,m,d]=String(n.d||'').split('-');
+  if(!y) return String(n.yr);
+  if(n.dp==='y'||!m) return y;
+  if(n.dp==='m'||!d) return `${MON[+m-1]} ${y}`;
+  return `${+d} ${MON[+m-1]} ${y}`;
 }
-/* free access (D15) */
+const YSRC={crossref:'Year of publication from Crossref (no journal issue year)',arxiv:'Year of the first arXiv version',openalex:'Publication year from OpenAlex'};
+const DSRC={openalex:'OpenAlex',arxiv:'arXiv (first version)',publisher:"the publisher's page"};
+const yearTitle=n=>YSRC[n.ys]||'Year of the journal issue or volume (Crossref), as the paper is cited';
+function venueHTML(n){
+  const yr=`<span title="${esc(yearTitle(n))}">${n.yr}</span>`;
+  // "vol(issue) pages"; a lone page range (book chapters, proceedings) gets "pp."
+  const vi=n.vi?String(n.vi).replace(/^(\S+) (\S+)$/,'$1, $2').replace(/^(\w+)-\1$/,'p. $1').replace(/^\w+-\w+$/,'pp. $&').replace(/(\d)-(\d)/g,'$1–$2'):'';
+  const head=n.v?(vi?`<i>${esc(n.v)}</i>${/^pp?\. /.test(vi)?',':''} ${esc(vi)} (${yr})`:`<i>${esc(n.v)}</i> · ${yr}`):yr;
+  if(!n.d||((n.dp==='y'||!/-/.test(n.d))&&+String(n.d).slice(0,4)===n.yr)) return head;
+  return `${head} · <span title="${esc('Date from '+(DSRC[n.ds]||'Crossref'))}">${n.ds==='arxiv'?'First posted on arXiv':'Published online'} ${esc(fmtDate(n))}</span>`;
+}
+/* the other records merged into this work (versions.js) */
+const REL={preprint:'preprint','double-record':'record','repository-copy':'copy',reprint:'reprint',addendum:'addendum',supplement:'supplementary material'};
+function versionsHTML(n){
+  const vs=VS[n.id]; if(!vs||!vs.length) return '';
+  const lab=v=>{
+    const s=/arxiv/i.test(v.v||'')?'arXiv':String(v.v||'').replace(/\s*\([^()]*\)\s*$/,''), r=REL[v.rel]||'record';
+    if(!s) return {record:'Duplicate record',copy:'Repository copy'}[r]||r[0].toUpperCase()+r.slice(1);
+    return v.rel==='repository-copy'?`copy in ${s}`:`${s} ${r}`;
+  };
+  // several records of the same version (e.g. two OpenAlex records of one addendum) are one entry: "(2007, 2 records)"
+  const bl=[]; vs.forEach(v=>{ const l=lab(v), y=v.y||'no date', o=bl.find(x=>x.l===l&&x.y===y); if(o) o.k++; else bl.push({l,y,k:1}); });
+  const brief=bl.slice(0,3).map(o=>`${o.l} (${o.y}${o.k>1?`, ${o.k} records`:''})`).join(' · ')+(bl.length>3?` · ${bl.length-3} more`:'');
+  const full=vs.map(v=>`<li>${esc(lab(v))} (${esc(v.y||'no date')}${v.doi?`, <a href="https://doi.org/${esc(v.doi)}" target="_blank" rel="noopener">doi:${esc(v.doi)}</a>`:''}) · <a href="https://openalex.org/${esc(v.id)}" target="_blank" rel="noopener">OpenAlex ${esc(v.id)}</a></li>`).join('');
+  return `<details class="vers"><summary>Also recorded as: ${esc(brief)}</summary><ul>${full}</ul><p class="src">These records are the same work and are merged into this page; citations to any of them count here, and their old links lead here.</p></details>`;
+}
+/* free access (D15): "free at publisher" only for a published version on a journal's own site */
 const AC=typeof ACCESS!=='undefined'?ACCESS:N.map(()=>({a:'',f:null,ab:null}));
 const ACC={oa:['Free at publisher','#7BD88F'],preprint:['arXiv preprint','#8FA7FF'],repo:['Other free copy','#EDC948'],closed:['No free version found','#4F5769']};
-function accessOf(n){ const a=AC[n.i]; if(a.f&&a.f.ver==='publishedVersion') return 'oa'; if(a.a) return 'preprint'; if(a.f) return 'repo'; return 'closed'; }
+const pubJ=f=>!!f&&f.ver==='publishedVersion'&&f.type==='journal';
+function accessOf(n){ const a=AC[n.i], f=a.f; if(pubJ(f)) return 'oa'; if(f&&f.ver==='publishedVersion') return 'repo'; if(a.a) return 'preprint'; if(f) return 'repo'; return 'closed'; }
 N.forEach(n=>{n.ac=accessOf(n);});
 const freeN=N.filter(n=>n.ac!=='closed').length;
 const VER={publishedVersion:'Published version',acceptedVersion:'Accepted manuscript',submittedVersion:'Submitted version'};
 function accessButtons(n){
-  const a=AC[n.i], out=[];
-  const fu=a.f&&/^https?:\/\//i.test(a.f.url||'')?a.f.url:null;
-  if(fu&&a.f.ver==='publishedVersion') out.push(`<a class="btn" href="${esc(fu)}" target="_blank" rel="noopener">Free full text${a.f.host?` · ${esc(a.f.host)}`:''} ↗</a>`);
-  if(a.a) out.push(`<a class="btn${out.length?' ghost':''}" href="https://arxiv.org/abs/${esc(a.a)}" target="_blank" rel="noopener">Preprint · arXiv:${esc(a.a)} ↗</a><a class="btn ghost" href="https://arxiv.org/pdf/${esc(a.a)}" target="_blank" rel="noopener">Preprint PDF ↗</a>`);
-  if(fu&&a.f.ver!=='publishedVersion') out.push(`<a class="btn${out.length?' ghost':''}" href="${esc(fu)}" target="_blank" rel="noopener">${VER[a.f.ver]||'Free copy'}${a.f.host?` · ${esc(a.f.host)}`:''} ↗</a>`);
-  if(n.doi) out.push(`<a class="btn ghost" href="https://doi.org/${esc(n.doi)}" target="_blank" rel="noopener">Publisher page (DOI) ↗</a>`);
+  const a=AC[n.i], f=a.f, out=[];
+  const fu=f&&/^https?:\/\//i.test(f.url||'')?f.url:null, host=f&&f.host?` · ${esc(f.host)}`:'';
+  const cls=()=>`btn${out.length?' ghost':''}`;
+  if(fu&&pubJ(f)) out.push(`<a class="${cls()}" href="${esc(fu)}" target="_blank" rel="noopener">Free full text${host} ↗</a>`);
+  if(fu&&!pubJ(f)&&f.ver==='publishedVersion') out.push(`<a class="${cls()}" href="${esc(fu)}" target="_blank" rel="noopener">Published version${host} ↗</a>`);
+  if(a.a) out.push(`<a class="${cls()}" href="https://arxiv.org/abs/${esc(a.a)}" target="_blank" rel="noopener">Preprint · arXiv:${esc(a.a)} ↗</a><a class="btn ghost" href="https://arxiv.org/pdf/${esc(a.a)}" target="_blank" rel="noopener">Preprint PDF ↗</a>`);
+  if(fu&&f.ver!=='publishedVersion') out.push(`<a class="${cls()}" href="${esc(fu)}" target="_blank" rel="noopener">${VER[f.ver]||'Free copy'}${host} ↗</a>`);
+  if(n.doi) out.push(`<a class="btn ghost" href="https://doi.org/${esc(n.doi)}" target="_blank" rel="noopener">Publisher page (DOI) ↗</a><button class="btn ghost" type="button" data-copy="${esc(n.doi)}">Copy DOI</button>`);
   if(a.si&&a.si.url) out.push(`<a class="btn ghost" href="${esc(a.si.url)}" target="_blank" rel="noopener">Supplementary information${a.si.host?` · ${esc(a.si.host)}`:''} ↗</a>`);
   const lic=a.f&&a.f.lic?`<span class="chip">Licence: ${esc(a.f.lic)}</span>`:'';
   const none=n.ac==='closed'?`<p class="meta">No free version found in OpenAlex, Semantic Scholar or arXiv. Know of one? Email <span class="mail">${MAIL}</span></p>`:'';
   return `<div class="links">${out.join('')}${lic}</div>${none}`;
 }
 
-/* site-wide search */
-// tokenized AND match: every word in the query must appear somewhere in the
-// haystack, in any order (a plain haystack.includes(query) fails whenever the
-// query's words aren't exactly adjacent and in that order in the source text,
-// e.g. "monopole Dirac" against a title that has them in the other order).
-function matchesQuery(haystack,q){
-  const words=q.toLowerCase().trim().split(/\s+/).filter(Boolean);
-  if(!words.length) return true;
-  const h=haystack.toLowerCase();
-  return words.every(w=>h.includes(w));
-}
+/* site-wide search (header dropdown) */
 const gq=$('#gq'), gres=$('#gres');
 function gsearch(){
-  const q=gq.value.trim();
-  if(q.length<2){gres.hidden=true;return;}
-  const papers=N.filter(n=>matchesQuery(n.t+' '+n.au+' '+n.v+' '+n.yr,q)).sort(byC).slice(0,10);
-  let h='';
-  if(papers.length) h+=`<div class="gh">Papers</div>`+papers.map(n=>`<a href="${hP(n.i)}"><b>${esc(n.lab)}</b> ${esc(n.t)}</a>`).join('');
-  gres.innerHTML=h||'<div class="gh">Nothing matches</div>';
+  const q=gq.value.trim(), all=q.length<2?null:searchN(q);
+  if(!all){gres.hidden=true;return;}
+  gres.innerHTML=all.length
+    ?`<div class="gh">Papers</div>`+all.slice(0,10).map(n=>`<a href="${hP(n.i)}"><b>${esc(n.lab)}</b> ${esc(n.t)}</a>`).join('')+
+      `<a href="#browse" data-bq="${esc(q)}"><b>All ${fmt(all.length)} ${all.length===1?'match':'matches'} in Browse →</b></a>`
+    :'<div class="gh">Nothing matches</div>';
   gres.hidden=false;
 }
 gq.addEventListener('input',gsearch);
 gq.addEventListener('focus',gsearch);
 gq.addEventListener('keydown',e=>{
-  if(e.key==='Enter'){ const a=gres.querySelector('a'); if(a){ e.preventDefault(); location.hash=a.getAttribute('href').slice(1); gres.hidden=true; gq.blur(); } }
+  if(e.key==='Enter'){ const a=gres.querySelector('a'); if(a){ e.preventDefault(); a.click(); gq.blur(); } }
   if(e.key==='Escape'){ gres.hidden=true; gq.blur(); }
 });
-gres.addEventListener('click',e=>{ if(e.target.closest('a')){ gres.hidden=true; gq.value=''; } });
+gres.addEventListener('click',e=>{
+  const a=e.target.closest('a'); if(!a) return;
+  if(a.dataset.bq!=null){ clearFilters(); setQuery(a.dataset.bq); renderBrowse(); }
+  gres.hidden=true; gq.value='';
+});
 document.addEventListener('click',e=>{ if(!e.target.closest('.gsearch')) gres.hidden=true; });
 document.addEventListener('keydown',e=>{ if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){ e.preventDefault(); gq.focus(); } });
 
-function topicLegend(papers){
-  const cnt=new Map(); for(const k of papers){ const t=N[k].tp; if(t) cnt.set(t,(cnt.get(t)||0)+1); }
-  return [...cnt.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5).map(([t,v])=>`<span class="chip"><span class="dot" style="--dot:${TOPIC[t][1]}"></span>${TOPIC[t][0]} <span class="num">${v}</span></span>`).join('');
-}
-
-$('#mockText').textContent=`${fmt(N.length)} works and ${fmt(L.length)} citation links from OpenAlex (September 2026). Topics and lattices are guessed from title keywords.`;
-$('#homeLede').textContent=`An early preview built from ${fmt(N.length)} works found in OpenAlex: searchable, ranked by citations from within the field, linked in one citation map, with free versions and abstracts. Classification by lattice, technique and topic is coming.`;
-$('#homeStats').innerHTML=[[fmt(N.length),'papers, theses and preprints'],[fmt(L.length),'citation links within ASI'],[MS.length,'milestones'],[Math.round(100*freeN/N.length)+' %','free to read']].map(([v,l])=>`<div><dt>${l}</dt><dd>${v}</dd></div>`).join('');
+$('#mockText').textContent=`${fmt(N.length)} works and ${fmt(L.length)} citation links from OpenAlex (September 2026). `+(nCarded?'Topics and lattices come from the paper cards where available, otherwise from title keywords.':'Topics and lattices are guessed from title keywords.');
+$('#homeLede').textContent=`An early preview built from ${fmt(N.length)} works found in OpenAlex: searchable, ranked by citations from within the field, linked in one citation map, with free versions and abstracts.`+
+  (nCarded?` ${fmt(nCarded)} of them already have a paper card (lattice, techniques, materials, methods, each value backed by a quote from the paper); cards for the rest are in progress.`:'');
+$('#homeStats').innerHTML=[[fmt(N.length),'works'],[fmt(L.length),'citation links within ASI'],[MS.length,'milestones'],[Math.round(100*freeN/N.length)+' %','free to read']].map(([v,l])=>`<div><dt>${l}</dt><dd>${v}</dd></div>`).join('');
 const accCnt=d3.rollup(N,v=>v.length,n=>n.ac), cc=k=>accCnt.get(k)||0;
-$('#freeStats').textContent=`In this sample of ${N.length} papers: ${cc('oa')} free at the publisher, ${cc('preprint')} more with an arXiv preprint, ${cc('repo')} with another free copy, and ${cc('closed')} (${Math.round(100*cc('closed')/N.length)} %) with no free version found.`;
-$('#q1n').textContent=`In this sample that is ${cc('closed')} of ${N.length} papers.`;
+$('#freeStats').textContent=`Of the ${fmt(N.length)} works: ${cc('oa')} free at the publisher, ${cc('repo')} with another free copy (a published version in a repository counts here), ${cc('preprint')} more with only an arXiv preprint, and ${cc('closed')} (${Math.round(100*cc('closed')/N.length)} %) with no free version found.`;
+$('#q1n').textContent=`That is ${cc('closed')} of the ${fmt(N.length)} works.`;
 $('#orphN').textContent=orphN;
-$('#mergeN').textContent=`${merged} duplicate records merged in this sample`;
+$('#mergeN').textContent=`${merged} duplicate records merged into ${Object.keys(VS).length} works`;
 $('#capNote').textContent=`${noRefs} of ${N.length} records (${Math.round(100*noRefs/N.length)} %) have no reference list in OpenAlex, mostly preprints, theses and conference papers. ${orphN} have no link at all and are hidden by default.`;
 
 /* ---------- router ---------- */
 const VIEWS=['home','map','browse','rankings','timeline','stats','paper','disclaimer'];
-const byWid=new Map(N.map(n=>[n.id,n.i]));
 function route(h){
-  let m;
-  if((m=/^paper-(W\d+)$/.exec(h))&&byWid.has(m[1])){ state.paper=byWid.get(m[1]); return 'paper'; }
+  const m=/^paper-(W\d+)$/.exec(h); if(!m) return h;
+  let id=m[1];
+  // a merged (superseded) record's old link: show the kept record and fix the address bar
+  if(!byWid.has(id)&&byWid.has(AL[id])){ id=AL[id]; history.replaceState(null,'','#paper-'+id); }
+  if(byWid.has(id)){ state.paper=byWid.get(id); return 'paper'; }
   return h;
 }
 let current=null;
@@ -707,7 +812,7 @@ document.addEventListener('click',e=>{
 });
 function copyText(text,btn){
   const done=()=>{ const o=btn.textContent; btn.textContent='Copied'; setTimeout(()=>{btn.textContent=o;},1400); };
-  const fallback=()=>{ const s=btn.previousElementSibling; if(s){ const r=document.createRange(); r.selectNodeContents(s); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); } btn.textContent='Selected: press Ctrl+C'; };
+  const fallback=()=>{ const s=btn.previousElementSibling; if(s&&s.textContent.includes(text)){ const r=document.createRange(); r.selectNodeContents(s); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); btn.textContent='Selected: press Ctrl+C'; } else btn.textContent=text; };
   try{ navigator.clipboard.writeText(text).then(done,fallback); }catch(err){ fallback(); }
 }
 
@@ -718,7 +823,7 @@ const rad=n=>2.2+13*Math.sqrt(n[G.sizeBy]/maxOf[G.sizeBy]);
 function colOf(n){
   if(G.colorBy==='year') return yearColor(n.yr);
   if(G.colorBy==='access') return ACC[n.ac][1];
-  const m=G.colorBy==='lattice'?LATT[n.lt]:TOPIC[n.tp];
+  const m=G.colorBy==='lattice'?LATT[n.lt1]:TOPIC[n.tp1];
   return (m||NONE)[1];
 }
 const sim=d3.forceSimulation()
@@ -753,7 +858,7 @@ function computeVis(){
   for(const n of sim.nodes()) if(G.local||(n.yr<=G.yearMax&&n.c>=G.minC)) G.vis[n.i]=1;
   let nv=0,lv=0; for(const n of sim.nodes()) if(G.vis[n.i]) nv++;
   for(const l of G.lk) if(G.vis[l.source.i]&&G.vis[l.target.i]) lv++;
-  $('#mapCount').textContent=`${fmt(nv)} papers · ${fmt(lv)} citation links shown`;
+  $('#mapCount').textContent=G.links?`${fmt(nv)} papers · ${fmt(lv)} citation links shown`:`${fmt(nv)} papers shown · citation links hidden (${fmt(lv)} among them)`;
   renderLegend(); requestDraw();
 }
 let drawPending=false;
@@ -933,7 +1038,7 @@ function renderInfo(){
   if(G.sel==null){el.hidden=true;return;}
   const n=N[G.sel]; el.hidden=false;
   const citing=IN[n.i].map(i=>N[i]).sort(byC).slice(0,5);
-  el.innerHTML=`<div class="info-top"><span class="kick">${typeLabel(n.ty)} · ${n.yr}</span><button class="x" id="infoX" type="button" aria-label="Close details">×</button></div>
+  el.innerHTML=`<div class="info-top"><span class="kick">${esc(typeText(n))} · ${n.yr}</span><button class="x" id="infoX" type="button" aria-label="Close details">×</button></div>
     <h3>${esc(n.t)}</h3><div class="meta">${metaLine(n)}</div>
     ${n.ms?`<div class="msline">Milestone: ${esc(n.ms)}</div>`:''}
     <div class="mgrid"><div><b>${n.c}</b><span>within ASI · #${n.cr}</span></div><div><b>${fmt(n.g)}</b><span>global · #${n.gr}</span></div><div><b>${n.r}</b><span>cited 2024–26</span></div><div><b>${OUT[n.i].length}</b><span>ASI papers it cites</span></div></div>
@@ -961,9 +1066,9 @@ function focusNode(i){ ensureVisible(i); select(i); if(!G.local) centerOn(i); }
 /* controls */
 const sIn=$('#mapSearch'), sRes=$('#mapSearchRes');
 sIn.addEventListener('input',()=>{
-  const q=sIn.value.trim();
-  if(q.length<2){sRes.hidden=true;return;}
-  const hits=N.filter(n=>matchesQuery(n.t+' '+n.au+' '+n.lab,q)).sort(byC).slice(0,8);
+  const q=sIn.value.trim(), all=q.length<2?null:searchN(q);
+  if(!all){sRes.hidden=true;return;}
+  const hits=all.slice(0,8);
   sRes.innerHTML=hits.length?hits.map(n=>`<button data-go="${n.i}" type="button"><b>${esc(n.lab)}</b>${esc(n.t)}</button>`).join(''):'<div class="none">No paper matches</div>';
   sRes.hidden=false;
 });
@@ -974,7 +1079,7 @@ segPick('#layoutBy',v=>{ if(v===G.layout) return; G.layout=v; applyLayoutForces(
 $('#sizeBy').addEventListener('change',e=>{ G.sizeBy=e.target.value; sim.force('collide').radius(n=>rad(n)+1.2); runSim(0.2); });
 $('#yearMax').addEventListener('input',e=>{ G.yearMax=+e.target.value; $('#yearMaxV').textContent=G.yearMax; computeVis(); });
 $('#minC').addEventListener('input',e=>{ G.minC=+e.target.value; $('#minCV').textContent=G.minC; computeVis(); });
-$('#showLinks').addEventListener('change',e=>{ G.links=e.target.checked; requestDraw(); });
+$('#showLinks').addEventListener('change',e=>{ G.links=e.target.checked; computeVis(); });
 $('#showOrph').addEventListener('change',e=>{ G.orph=e.target.checked; if(!G.local) setSimNodes(baseSet(),0.35); });
 let playT=null;
 function stopPlay(){ if(playT){clearInterval(playT);playT=null;} $('#play').textContent='Play'; }
@@ -998,60 +1103,104 @@ function renderLegend(){
     el.innerHTML=`<span class="lab">Free to read</span>`+Object.entries(ACC).map(([k,[lab,c]])=>`<div class="lg"><i style="background:${c}"></i>${lab}<span>${cnt.get(k)||0}</span></div>`).join('');
     return;
   }
-  const M=G.colorBy==='lattice'?LATT:TOPIC, key=G.colorBy==='lattice'?'lt':'tp';
+  const M=G.colorBy==='lattice'?LATT:TOPIC, key=G.colorBy==='lattice'?'lt1':'tp1';
   const cnt=new Map(); for(const n of sim.nodes()) if(G.vis[n.i]){ const k=n[key]||'_'; cnt.set(k,(cnt.get(k)||0)+1); }
-  el.innerHTML=`<span class="lab">${G.colorBy==='lattice'?'Lattice':'Topic'} (title keyword guess)</span>`+
-    Object.entries(M).map(([k,[lab,c]])=>`<div class="lg"><i style="background:${c}"></i>${lab}<span>${cnt.get(k)||0}</span></div>`).join('')+
-    `<div class="lg"><i style="background:${NONE[1]}"></i>${NONE[0]}<span>${cnt.get('_')||0}</span></div>`;
+  el.innerHTML=`<span class="lab">${G.colorBy==='lattice'?'Lattice':'Topic'} (paper card, else title keywords)</span>`+
+    Object.entries(M).map(([k,[lab,c]])=>`<div class="lg"><i style="background:${c}"></i>${esc(lab)}<span>${cnt.get(k)||0}</span></div>`).join('')+
+    `<div class="lg"><i style="background:${NONE[1]}"></i>${G.colorBy==='lattice'?'Not known':NONE[0]}<span>${cnt.get('_')||0}</span></div>`;
 }
 
 /* hero */
 const hcv=$('#heroMap'), hcx=hcv.getContext('2d');
+// the Home preview always shows the whole linked network, whatever the Map's sliders, link toggle or local graph
 function drawHero(){
   const r=hcv.getBoundingClientRect(); if(!r.width) return;
-  const d=window.devicePixelRatio||1;
-  if(hcv.width!==Math.round(r.width*d)||hcv.height!==Math.round(r.height*d)){hcv.width=Math.round(r.width*d);hcv.height=Math.round(r.height*d);}
-  drawGraph(hcx,r.width,r.height,fitT(r.width,r.height,16,0,0),{labels:false,focus:false,linkAlpha:0.12,dpr:d});
+  const d=window.devicePixelRatio||1, w=r.width, h=r.height;
+  if(hcv.width!==Math.round(w*d)||hcv.height!==Math.round(h*d)){hcv.width=Math.round(w*d);hcv.height=Math.round(h*d);}
+  const P=[]; let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  for(const n of N){
+    if(!n.deg) continue;
+    const p=(G.saved&&G.saved.get(n.i))||(n.x!=null?[n.x,n.y]:null); if(!p||isNaN(p[0])) continue;
+    const q=rad(n); P[n.i]=p; x0=Math.min(x0,p[0]-q); y0=Math.min(y0,p[1]-q); x1=Math.max(x1,p[0]+q); y1=Math.max(y1,p[1]+q);
+  }
+  hcx.setTransform(d,0,0,d,0,0); hcx.globalAlpha=1; hcx.fillStyle=MAPBG; hcx.fillRect(0,0,w,h);
+  if(!isFinite(x0)) return;
+  const k=Math.min((w-32)/Math.max(1,x1-x0),(h-32)/Math.max(1,y1-y0),3);
+  hcx.save(); hcx.translate(w/2-k*(x0+x1)/2,h/2-k*(y0+y1)/2); hcx.scale(k,k);
+  hcx.lineWidth=0.6/k; hcx.strokeStyle='rgba(140,155,185,0.12)'; hcx.beginPath();
+  for(const [s,t] of L){ const a=P[s], b=P[t]; if(a&&b){ hcx.moveTo(a[0],a[1]); hcx.lineTo(b[0],b[1]); } }
+  hcx.stroke();
+  for(const n of N){ const p=P[n.i]; if(!p) continue; hcx.fillStyle=colOf(n); hcx.beginPath(); hcx.arc(p[0],p[1],rad(n),0,6.2832); hcx.fill(); }
+  hcx.restore();
 }
 window.addEventListener('resize',()=>{ if(current==='home') requestDraw(); if(current==='paper'){ drawMini(N[state.paper]); fitCard(); } });
 
 /* ---------- home ---------- */
-$('#homeNew').innerHTML=[...N].sort((a,b)=>(b.d||'').localeCompare(a.d||'')).slice(0,6).map(n=>`<li>${plink(n)}<div class="meta">${metaLine(n)}</div><div class="chips"><span class="chip">${typeLabel(n.ty)}</span><span class="chip num">${esc(n.d||'')}</span></div></li>`).join('');
+$('#homeNew').innerHTML=[...N].sort((a,b)=>(b.d||'').localeCompare(a.d||'')).slice(0,6).map(n=>`<li>${plink(n)}<div class="meta">${metaLine(n)}</div><div class="chips"><span class="chip">${esc(typeText(n))}</span><span class="chip num">${esc(fmtDate(n))}</span></div></li>`).join('');
 $('#homeTrend').innerHTML=[...N].sort((a,b)=>b.r-a.r||b.c-a.c).slice(0,6).map(n=>`<li>${plink(n)}<div class="meta">${metaLine(n)}</div><div class="nums">${n.r} citations from 2024–26 ASI papers</div></li>`).join('');
-$('#homeSearch').addEventListener('submit',e=>{ e.preventDefault(); B.q=$('#homeQ').value.trim(); B.shown=25; renderBrowse(); location.hash='browse'; });
+$('#homeSearch').addEventListener('submit',e=>{ e.preventDefault(); clearFilters(); setQuery($('#homeQ').value.trim()); renderBrowse(); location.hash='browse'; });
 
 /* ---------- browse ---------- */
-const B={q:'',jn:null,tp:new Set(),lt:new Set(),ty:new Set(),ac:new Set(),y0:minYear,y1:2026,sort:'c',shown:25};
+const B={q:'',toks:[],jn:null,tp:new Set(),lt:new Set(),ty:new Set(),ac:new Set(),y0:minYear,y1:2026,sort:'c',autoSort:true,shown:25,open:new Set()};
+/* card facets: only values the paper itself used (u==='used'); cited_only and reanalysed values do not count */
+const CF=[['approach','Approach'],['characterization','Technique'],['computational_method','Simulation / theory'],['material','Material'],['state_preparation','State preparation'],['thermal_regime','Thermal regime'],['patterning','Patterning'],['moment_type','Moment type'],['connectivity','Connectivity']];
+const CV=new Map(), CTOT={};
+CF.forEach(([f])=>{ B['c_'+f]=new Set(); CTOT[f]=new Map(); });
+for(const n of N){ if(!CARDN.has(n.i)) continue; const o={};
+  for(const [f] of CF){ o[f]=new Set(usedVals(n,f).map(v=>v.v)); for(const v of o[f]) CTOT[f].set(v,(CTOT[f].get(v)||0)+1); }
+  CV.set(n.i,o); }
+const FKEYS=['tp','lt','ty','ac',...CF.map(([f])=>'c_'+f)];
+function clearFilters(){ FKEYS.forEach(k=>B[k].clear()); B.jn=null; B.y0=minYear; B.y1=2026; B.shown=25; }
+function nActive(){ return FKEYS.reduce((a,k)=>a+B[k].size,0)+(B.jn?1:0)+(B.y0!==minYear||B.y1!==2026?1:0); }
+function setQuery(q){
+  B.q=q; B.toks=qTokens(q); B.shown=25;
+  if(B.autoSort){ B.sort=B.toks.length?'rel':'c'; $('#sortBy').value=B.sort; }
+}
+const facetVals=(n,k)=>k==='tp'?(n.tps.length?n.tps:['_']):k==='lt'?(n.lts.length?n.lts:['_']):k==='ty'?[typeFacet(n)]:[n.ac];
 function passes(n,skip){
-  if(B.q&&!matchesQuery(n.t+' '+n.au+' '+n.v,B.q)) return false;
-  if(skip!=='tp'&&B.tp.size&&!B.tp.has(n.tp||'_')) return false;
-  if(skip!=='lt'&&B.lt.size&&!B.lt.has(n.lt||'_')) return false;
-  if(skip!=='ty'&&B.ty.size&&!B.ty.has(typeKey(n.ty))) return false;
-  if(skip!=='ac'&&B.ac.size&&!B.ac.has(n.ac)) return false;
+  if(B.toks.length&&!matchQ(n,B.toks)) return false;
+  for(const k of ['tp','lt','ty','ac']) if(skip!==k&&B[k].size&&!facetVals(n,k).some(v=>B[k].has(v))) return false;
+  for(const [f] of CF){ const k='c_'+f, s=B[k]; if(skip!==k&&s.size){ const o=CV.get(n.i); if(!o||![...s].some(v=>o[f].has(v))) return false; } }
   if(B.jn&&n.jn!==B.jn) return false;
   return n.yr>=B.y0&&n.yr<=B.y1;
 }
-const OFF=[['Approach',['Experiment','Simulation','Analytic theory','Methods','Review']],['Technique',['MFM','XMCD-PEEM','Lorentz TEM','X-ray transmission','FMR / BLS']],['Material',['Permalloy','CoFeB','PMA multilayer','delta-doped Pd(Fe)']],['State preparation',['Rotating-field demag','Thermal annealing','As-grown','Thermally active']]];
-function facetCounts(key){ const cnt=new Map(); for(const n of N) if(passes(n,key)){ const k=key==='ty'?typeKey(n.ty):(n[key]||'_'); cnt.set(k,(cnt.get(k)||0)+1); } return cnt; }
-function facetGroup(title,key,entries){
-  const cnt=facetCounts(key);
-  return `<div class="fgroup"><h5>${title}</h5>${entries.map(([k,lab,c])=>`<label class="fopt"><input type="checkbox" data-f="${key}" value="${k}" ${B[key].has(k)?'checked':''}>${c?`<span class="dot" style="--dot:${c}"></span>`:''}${lab}<span class="c">${cnt.get(k)||0}</span></label>`).join('')}${key==='tp'||key==='lt'?'<p class="hint">Guessed from title keywords for now</p>':''}</div>`;
+function facetCounts(key){
+  const cnt=new Map(), add=v=>cnt.set(v,(cnt.get(v)||0)+1);
+  for(const n of N){
+    if(!passes(n,key)) continue;
+    if(key.startsWith('c_')){ const o=CV.get(n.i); if(o) o[key.slice(2)].forEach(add); }
+    else facetVals(n,key).forEach(add);
+  }
+  return cnt;
+}
+/* option order: by overall count (fixed, so options do not jump around); long groups fold after 6 options */
+const GTOT={}; ['tp','lt','ty'].forEach(k=>{ GTOT[k]=new Map(); N.forEach(n=>facetVals(n,k).forEach(v=>GTOT[k].set(v,(GTOT[k].get(v)||0)+1))); });
+function facetGroup(title,key,entries,hint){
+  const cnt=facetCounts(key), cap=entries.length>8, open=B.open.has(key);
+  return `<div class="fgroup${open?' open':''}"><h5>${title}</h5>${entries.map(([k,lab,c,tt],j)=>`<label class="fopt${cap&&j>=6&&!B[key].has(k)?' xtra':''}"${tt?` title="${esc(tt)}"`:''}><input type="checkbox" data-f="${key}" value="${esc(k)}" ${B[key].has(k)?'checked':''}>${c?`<span class="dot" style="--dot:${c}"></span>`:''}${esc(lab)}<span class="c">${cnt.get(k)||0}</span></label>`).join('')}${cap?`<button type="button" class="fmore" data-more="${key}" aria-expanded="${open}">${open?'Show fewer':`Show all ${entries.length}`}</button>`:''}${hint?`<p class="hint">${hint}</p>`:''}</div>`;
+}
+const byTot=(M,key,none)=>[...Object.entries(M).filter(([k])=>GTOT[key].get(k)).sort((a,b)=>GTOT[key].get(b[0])-GTOT[key].get(a[0])).map(([k,[l,c]])=>[k,l,c]),['_',none,NONE[1]]];
+function cardGroup(f,title){
+  const L=(CL[f]&&CL[f].values)||{};
+  const keys=[...CTOT[f].keys()].sort((a,b)=>(a==='other')-(b==='other')||CTOT[f].get(b)-CTOT[f].get(a));
+  return facetGroup(title,'c_'+f,keys.map(v=>[v,L[v]||v,null]));
 }
 function renderFacets(){
   const yrs=d3.range(minYear,2027).reverse();
   const opt=v=>yrs.map(y=>`<option ${y===v?'selected':''}>${y}</option>`).join('');
+  const hy=nCarded?'From the paper card; for papers without one, guessed from title keywords.':'Guessed from title keywords.';
   $('#facets').innerHTML=
-    `<div class="fgroup fsearch"><h5>Search</h5><input type="search" id="fq" placeholder="Title, author, journal" value="${esc(B.q)}" aria-label="Search titles, authors, journals" style="width:100%"></div>`+
-    `<div class="fgroup"><h5>Review status</h5><label class="fopt"><input type="checkbox" disabled><span class="rv h">Person-reviewed</span>&nbsp;only</label><p class="hint">Coming with the paper cards</p></div>`+
-    facetGroup('Topic','tp',[...Object.entries(TOPIC).map(([k,[l,c]])=>[k,l,c]),['_','Unclassified',NONE[1]]])+
-    facetGroup('Lattice','lt',[...Object.entries(LATT).map(([k,[l,c]])=>[k,l,c]),['_','Not in title',NONE[1]]])+
+    facetGroup('Topic','tp',byTot(TOPIC,'tp','Unclassified'),hy)+
+    facetGroup('Lattice','lt',byTot(LATT,'lt','Not known'),hy)+
     facetGroup('Free to read','ac',Object.entries(ACC).map(([k,[l,c]])=>[k,l,c]))+
-    facetGroup('Type','ty',[...Object.entries(TYPES).map(([k,l])=>[k,l,null]),['other','Other',null]])+
-    `<div class="fgroup"><h5>Year</h5><div class="yrsel"><select id="fy0" aria-label="From year">${opt(B.y0)}</select><span class="faint">to</span><select id="fy1" aria-label="To year">${opt(B.y1)}</select></div></div>`+
-    OFF.map(([t,vals])=>`<div class="fgroup off"><h5>${t}</h5>${vals.map(v=>`<label class="fopt"><input type="checkbox" disabled>${v}</label>`).join('')}<p class="hint">Coming with the paper cards</p></div>`).join('');
-  $('#fq').addEventListener('input',e=>{ B.q=e.target.value; B.shown=25; renderResults(); renderFacetCounts(); });
-  $('#fy0').onchange=e=>{B.y0=+e.target.value;B.shown=25;renderBrowse();};
-  $('#fy1').onchange=e=>{B.y1=+e.target.value;B.shown=25;renderBrowse();};
+    facetGroup('Type','ty',[...Object.entries(TYPES),['other','Other']].filter(([k])=>GTOT.ty.get(k)).map(([k,l])=>[k,l,null,k==='review'?'Reviews, perspectives, colloquia and roadmaps, of any publication form':null]))+
+    `<div class="fgroup fyear"><h5>Year</h5><div class="yrsel"><select id="fy0" aria-label="From year">${opt(B.y0)}</select><span class="faint">to</span><select id="fy1" aria-label="To year">${opt(B.y1)}</select></div></div>`+
+    (nCarded?`<div class="fgroup fcards"><h5>From paper cards</h5><p class="hint">${fmt(nCarded)} of ${fmt(N.length)} papers have a card so far. Only what a paper itself did counts, not methods it only cites. Ticking any of these leaves out papers without a card.</p></div>`+
+      CF.map(([f,t])=>cardGroup(f,t)).join(''):'');
+  // an inverted range (From after To) is swapped rather than giving 0 results
+  const yr=()=>{ if(B.y0>B.y1) [B.y0,B.y1]=[B.y1,B.y0]; B.shown=25; renderBrowse(); };
+  $('#fy0').onchange=e=>{B.y0=+e.target.value;yr();};
+  $('#fy1').onchange=e=>{B.y1=+e.target.value;yr();};
 }
 function renderFacetCounts(){
   $$('#facets .fgroup').forEach(g=>{
@@ -1064,29 +1213,46 @@ $('#facets').addEventListener('change',e=>{
   const i=e.target; if(!i.dataset||!i.dataset.f) return;
   const s=B[i.dataset.f]; i.checked?s.add(i.value):s.delete(i.value); B.shown=25; renderResults(); renderFacetCounts();
 });
+$('#facets').addEventListener('click',e=>{
+  const b=e.target.closest('[data-more]'); if(!b) return;
+  const k=b.dataset.more, g=b.closest('.fgroup');
+  if(B.open.has(k)) B.open.delete(k); else B.open.add(k);
+  g.classList.toggle('open',B.open.has(k));
+  b.textContent=B.open.has(k)?'Show fewer':`Show all ${g.querySelectorAll('.fopt').length}`; b.setAttribute('aria-expanded',B.open.has(k));
+});
+const chipKV=([l,c],g)=>`<span class="chip${g?' guess':''}"${g?' title="Guessed from title keywords"':''}><span class="dot" style="--dot:${c}"></span>${esc(l)}</span>`;
 function renderResults(){
-  const arr=N.filter(n=>passes(n));
-  const s=B.sort;
-  arr.sort(s==='new'?(a,b)=>(b.d||'').localeCompare(a.d||''):s==='g'?(a,b)=>b.g-a.g:s==='r'?(a,b)=>b.r-a.r||b.c-a.c:byC);
+  const arr=N.filter(n=>passes(n)), s=B.sort;
+  arr.sort(s==='rel'?byRel(B.toks):s==='new'?(a,b)=>(b.d||'').localeCompare(a.d||''):s==='g'?(a,b)=>b.g-a.g:s==='r'?(a,b)=>b.r-a.r||b.c-a.c:byC);
   $('#resN').textContent=`${fmt(arr.length)} of ${fmt(N.length)} works`;
+  $('#resN2').textContent=`${fmt(arr.length)} ${arr.length===1?'work matches':'works match'}`;
+  const na=nActive(); $('#fActive').textContent=na?`· ${na} active`:''; $('#clearF').hidden=!na;
   const jf=$('#jnFilter');
   if(B.jn){ jf.hidden=false; jf.innerHTML=`<span class="chip">Journal: ${esc(B.jn)} <button type="button" class="x" id="jnX" aria-label="Clear journal filter">×</button></span>`; $('#jnX').onclick=()=>{ B.jn=null; B.shown=25; renderBrowse(); }; }
   else jf.hidden=true;
-  $('#resList').innerHTML=arr.slice(0,B.shown).map(n=>{
-    const tp=TOPIC[n.tp], lt=LATT[n.lt];
-    return `<li>${plink(n)}<div class="meta">${metaLine(n)}</div><div class="chips">${tp?`<span class="chip"><span class="dot" style="--dot:${tp[1]}"></span>${tp[0]}</span>`:''}${lt?`<span class="chip"><span class="dot" style="--dot:${lt[1]}"></span>${lt[0]}</span>`:''}<span class="chip">${typeLabel(n.ty)}</span>${n.ms?'<span class="chip" style="border-color:var(--accent);color:var(--accent)">Milestone</span>':''}</div><div class="nums">${n.c} within ASI · ${fmt(n.g)} global</div></li>`;
-  }).join('')||'<li class="meta">No works match these filters.</li>';
+  $('#resList').innerHTML=arr.slice(0,B.shown).map(n=>
+    `<li>${plink(n)}<div class="meta">${metaLine(n)}</div><div class="chips">${n.tps.map(k=>chipKV(TOPIC[k],n.tpg)).join('')}${n.lts.map(k=>chipKV(LATT[k],n.ltg)).join('')}<span class="chip">${esc(typeText(n))}</span>${n.ms?'<span class="chip" style="border-color:var(--accent);color:var(--accent)">Milestone</span>':''}</div><div class="nums">${n.c} within ASI · ${fmt(n.g)} global</div></li>`
+  ).join('')||'<li class="meta">No works match these filters.</li>';
   $('#more').hidden=arr.length<=B.shown;
 }
-function renderBrowse(){ renderFacets(); renderResults(); }
-$('#sortBy').onchange=e=>{B.sort=e.target.value;B.shown=25;renderResults();};
+function renderBrowse(){ $('#fq').value=B.q; renderFacets(); renderResults(); }
+$('#fq').addEventListener('input',e=>{ setQuery(e.target.value); renderResults(); renderFacetCounts(); });
+$('#clearF').onclick=()=>{ clearFilters(); renderBrowse(); };
+const fmq=matchMedia('(max-width:760px)'), syncFD=()=>{ $('#fdetails').open=!fmq.matches; };
+syncFD(); fmq.addEventListener('change',syncFD);
+$('#toRes').onclick=()=>$('.res-bar').scrollIntoView({behavior:REDUCED?'auto':'smooth',block:'start'});
+$('#browseLede').textContent=nCarded
+  ?`Filter all ${fmt(N.length)} works by topic and lattice (from the paper card where there is one, otherwise guessed from title keywords), type, year and free access. The ${fmt(nCarded)} papers with a paper card can also be filtered by approach, technique, material, state preparation and more.`
+  :`Filter all ${fmt(N.length)} works by topic and lattice (guessed from title keywords), type, year and free access.`;
+$('#sortBy').onchange=e=>{B.sort=e.target.value;B.autoSort=false;B.shown=25;renderResults();};
+$('#sortBy').value=B.sort;
 $('#more').onclick=()=>{B.shown+=25;renderResults();};
 
 /* ---------- rankings ---------- */
 const R={m:'c',since:0,type:'all'};
 function renderRank(){
   const key=R.m;
-  const ok=n=>R.type==='all'?!['dissertation','preprint'].includes(n.ty):n.ty===R.type;
+  const ok=n=>R.type==='all'?!n.rv&&['article','conference-paper','book-chapter'].includes(n.ty):R.type==='review'?!!n.rv:n.ty===R.type;
   const arr=N.filter(n=>n.yr>=R.since&&ok(n)).sort((a,b)=>b[key]-a[key]||b.c-a.c).slice(0,30);
   const mx=d3.max(arr,n=>n.c)||1;
   $$('.rank th[data-k]').forEach(th=>th.classList.toggle('on',th.dataset.k===key));
@@ -1126,20 +1292,14 @@ function renderTimeline(){
 }
 
 /* ---------- statistics: journals (D17) ---------- */
-const REPO_RE=/OSTI|UKnowledge|Research Online|Repository|Digital Commons|Research Portal|eTheses|Figshare|DiVA|LA Referencia|Americanae|Enlighten|ORCA|\bHAL\b|Zenodo|ResearchGate/i;
-const APS_RE=/Bulletin of the American Physical Society/i;
-function journalOf(n){
-  if(n.ty!=='article'&&n.ty!=='review') return null;
-  let v=(n.v||'').trim();
-  if(!v||APS_RE.test(v)||REPO_RE.test(v)) return null;
-  if(v.includes('/')) v=v.split('/').pop().trim();
-  const m=/^physical review\.?\s*([a-z])\.?$/i.exec(v);
-  if(m) v='Physical Review '+m[1].toUpperCase();
-  return v;
-}
+/* a journal paper = the pipeline's venue kind is "journal" (canonical venue names) and it is not a meeting abstract */
+const journalOf=n=>n.vk==='journal'&&n.ty!=='conference-abstract'&&n.v?n.v:null;
 N.forEach(n=>{n.jn=journalOf(n);});
 const J={period:'all'};
 const inPeriod=n=>J.period==='all'||(J.period==='early'?n.yr<=2015:n.yr>=2016);
+// works left out of the journal count, by kind (first matching kind wins)
+const JKINDS=[[['thesis','theses'],n=>n.ty==='dissertation'||n.vk==='thesis'],[['preprint','preprints'],n=>n.ty==='preprint'],[['conference paper or abstract','conference papers and abstracts'],n=>/^conference/.test(n.ty)||n.vk==='conference'],
+  [['book chapter or book','book chapters and books'],n=>n.ty==='book-chapter'||/^book/.test(n.vk)],[['magazine piece','magazine pieces'],n=>n.vk==='magazine'],[['repository copy','repository copies'],n=>n.vk==='repository'],[['record without a venue','records without a venue'],n=>!n.v]];
 function renderJournals(){
   const cnt=new Map(), free=new Map(); let total=0;
   for(const n of N){ if(!n.jn||!inPeriod(n)) continue; total++; cnt.set(n.jn,(cnt.get(n.jn)||0)+1); if(n.ac!=='closed') free.set(n.jn,(free.get(n.jn)||0)+1); }
@@ -1157,6 +1317,11 @@ function renderJournals(){
     `<div class="jaxis" aria-hidden="true"><span></span><span class="ticks">${ticks.map(t=>`<span style="left:calc((100% - 44px) * ${t/niceMax})">${t}</span>`).join('')}</span></div>`;
   const label={all:'all years',early:'2006–2015',late:'2016–2026'}[J.period];
   $('#jSummary').textContent=`${fmt(total)} journal papers in ${rows.length} journals, ${label}. The top 20 are shown; click one to list its papers.`;
+  // what is left out, for the same period
+  const xc=JKINDS.map(()=>0); let other=0;
+  for(const n of N){ if(n.jn||!inPeriod(n)) continue; const k=JKINDS.findIndex(([,f])=>f(n)); if(k<0) other++; else xc[k]++; }
+  const parts=JKINDS.map(([l],k)=>xc[k]?`${fmt(xc[k])} ${l[xc[k]===1?0:1]}`:'').filter(Boolean).concat(other?[`${other} other ${other===1?'record':'records'}`]:[]);
+  $('#jExcluded').textContent=parts.length?`Not counted as journal papers${J.period==='all'?'':` (${label})`}: ${parts.join(', ').replace(/, ([^,]*)$/,' and $1')}.`:'';
   $('#jTable').innerHTML=`<thead><tr><th>Journal</th><th class="n">Papers</th><th class="n">Share</th><th class="n">Free to read</th></tr></thead><tbody>${rows.map(([name,c])=>`<tr><td>${esc(name)}</td><td class="n">${c}</td><td class="n">${(100*c/total).toFixed(1)} %</td><td class="n">${free.get(name)||0}</td></tr>`).join('')}</tbody>`;
   J.total=total;
 }
@@ -1172,35 +1337,34 @@ $('#jChart').addEventListener('mousemove',e=>showJTip(e.target.closest('.jrow'),
 $('#jChart').addEventListener('mouseleave',()=>{jTip.hidden=true;});
 $('#jChart').addEventListener('focusin',e=>{ const b=e.target.closest('.jrow'); if(b){ const r=b.getBoundingClientRect(); showJTip(b,r.left+r.width*0.45,r.top+r.height/2); } });
 $('#jChart').addEventListener('focusout',()=>{jTip.hidden=true;});
+// a bar opens Browse with that journal and the chart's period, and nothing else filtered, so the counts agree
 $('#jChart').addEventListener('click',e=>{
   const b=e.target.closest('.jrow[data-jn]'); if(!b) return;
-  jTip.hidden=true; B.jn=b.dataset.jn; B.q=''; B.shown=25; renderBrowse(); location.hash='browse';
+  jTip.hidden=true; clearFilters(); setQuery(''); B.jn=b.dataset.jn;
+  if(J.period==='early') B.y1=2015; else if(J.period==='late') B.y0=2016;
+  renderBrowse(); location.hash='browse';
 });
 segPick('#jPeriod',v=>{ J.period=v; renderJournals(); });
-{
-  const aps=N.filter(n=>n.ty==='article'&&APS_RE.test(n.v||'')).length;
-  const repo=N.filter(n=>(n.ty==='article'||n.ty==='review')&&n.v&&REPO_RE.test(n.v)).length;
-  const nov=N.filter(n=>(n.ty==='article'||n.ty==='review')&&!(n.v||'').trim()).length;
-  const other=N.filter(n=>n.ty!=='article'&&n.ty!=='review').length;
-  $('#jExcluded').textContent=`Not counted: ${other} preprints, theses, conference papers and book chapters; ${aps} APS March Meeting abstracts that OpenAlex lists as articles; ${repo} articles whose record names a repository instead of the journal; ${nov} without a venue.`;
-  $('#jNote').textContent=`${aps} records typed as journal articles are really APS March Meeting abstracts (Bulletin of the APS). The pipeline should classify them as conference abstracts.`;
-}
+$('#jNote').textContent=`${N.filter(n=>n.ty==='conference-abstract').length} records are conference abstracts (mostly APS March Meeting abstracts from the Bulletin of the APS, which OpenAlex lists as articles); they are typed as conference abstracts and left out of the journal count.`;
 
 /* ---------- corrections ---------- */
 const correction=what=>`<div class="fix"><span><b>Something wrong or missing on this ${what}?</b> Email <span class="mail">${MAIL}</span></span><button class="btn ghost sm" type="button" data-copy="${MAIL}">Copy address</button></div>`;
 
-/* ---------- paper ---------- */
-const WANG_CARD=[];
-const RV={h:'<span class="rv h">Person</span>',a:'<span class="rv a">AI</span>'};
 /* ---------- paper cards (D8, D10) ---------- */
-const CD=typeof CARDS!=='undefined'?CARDS:{}, CL=typeof CARD_LABELS!=='undefined'?CARD_LABELS:{};
+const RV={h:'<span class="rv h">Person</span>',a:'<span class="rv a">AI</span>'};
+// the key suffix gives the unit (_nm, _K, _mT). A value that names its own unit, or has no number outside brackets
+// ("in-plane field along [1 0]"), is shown as it is; plain numbers, ranges and lists get the unit after them ("5, 250 K");
+// numbers mixed with words get it after the name ("T (K): above T_C (~475)", not "… (~475) K")
+const UNIT_RE=/(^|[^A-Za-z])(k?Oe|A\/m|mT|T|°C|mK|K|nm|[μµu]m)(?![A-Za-z_])|\d\s*C\b/;
+const NUM_ONLY=/^[\s\d.,;~≈<>≤≥±+\-−–=]*(?:to[\s\d.,;~≈<>≤≥±+\-−–=]+)*$/;
 function fmtParam(k,x){
-  const unit=k.endsWith('_nm')?' nm':k.endsWith('_K')?' K':k.endsWith('_mT')?' mT':'';
-  const name=k.replace(/_(nm|K|mT)$/,'').replace(/_/g,' ');
-  return unit?`${name} ${x}${unit}`:`${name}: ${x}`;
+  const m=/_(nm|K|mT)$/.exec(k), name=k.replace(/_(nm|K|mT)$/,'').replace(/_/g,' '), s=String(x).trim();
+  if(!m) return `${name}: ${s}`;
+  if(UNIT_RE.test(s)||!/\d/.test(s.replace(/\[[^\]]*\]/g,''))) return /^[\s~≈<>≤≥±+\-−–=.]*\d/.test(s)?`${name} ${s}`:`${name}: ${s}`;
+  return NUM_ONLY.test(s)?`${name} ${s} ${m[1]}`:`${name} (${m[1]}): ${s}`;
 }
 function cardHTML(n){
-  const c=CD[n.id]; if(!c) return '';
+  const c=CARDN.get(n.i); if(!c) return '';
   const rows=Object.keys(CL).filter(f=>c.fields[f]&&c.fields[f].length).map(f=>{
     const L=CL[f];
     const vals=c.fields[f].map(v=>{
@@ -1212,7 +1376,7 @@ function cardHTML(n){
     return `<tr><th>${esc(L.label)}</th><td>${vals}</td></tr>`;
   }).join('');
   const nv=Object.values(c.fields).reduce((a,v)=>a+v.length,0);
-  return `<div class="rvkey"><span>${RV.h} reviewed by a person</span><span>${RV.a} reviewed by AI</span><span class="chip">Basis: ${c.basis==='full_text'?'full text':'abstract'}</span></div>
+  return `<div class="rvkey">${anyPerson?`<span>${RV.h} reviewed by a person</span>`:''}<span>${RV.a} reviewed by AI</span><span class="chip">Basis: ${c.basis==='full_text'?'full text':'abstract'}</span></div>
     <div class="cardwrap" id="cardWrap" data-n="${nv}"><table class="card-t"><tbody>${rows}</tbody></table>
     <p class="src">Click a value to see the sentence in the paper it is based on. AI-reviewed means the quote was checked against the paper's text; values can still be wrong.</p></div>
     <button type="button" class="btn ghost sm cardtoggle" id="cardToggle" aria-expanded="false" aria-controls="cardWrap" hidden>Show the full card (${nv} values) ▾</button>`;
@@ -1305,26 +1469,27 @@ document.addEventListener('click',e=>{
 });
 
 function renderPaper(){
-  const n=N[state.paper], isW=false;
+  const n=N[state.paper], a=AC[n.i];
   const citing=IN[n.i].map(i=>N[i]).sort(byC), refs=OUT[n.i].map(i=>N[i]).sort(byC);
-  const card=isW
-    ?`<div class="rvkey"><span>${RV.h} reviewed by you</span><span>${RV.a} reviewed by AI</span><span class="chip">Basis: full text</span></div>
-      
-      <table class="card-t"><tbody>${WANG_CARD.map(([f,vs])=>`<tr><th>${f}</th><td>${vs.map(([v,u,r])=>`<span class="val">${esc(v)}<span class="u">${u}</span>${RV[r]}</span>`).join('')}</td></tr>`).join('')}</tbody></table>`
-    :`<div class="empty">Coming soon: lattice, material and island geometry, fabrication, state preparation, techniques, simulation methods and observables, each backed by a quote from the paper and marked as reviewed by AI or by a person.</div>`;
-  const ab=AC[n.i].ab, ab2=AC[n.i].ab2, absrc=AC[n.i].absrc;
-  const abstract=ab
-    ?`<p class="prose">${esc(ab)}</p><p class="src">Abstract of the arXiv version, arXiv:${esc(AC[n.i].a)} (arXiv metadata, CC0). The journal version's abstract can differ slightly.</p>`
-    :ab2
-    ?`<p class="prose">${esc(ab2)}</p><p class="src">Official abstract via ${esc(absrc||'the publisher')}. Publisher abstracts are usually copyrighted; shown here as fair-use bibliographic description.</p>`
+  const card=`<div class="empty">No paper card yet.${nCarded?` Cards so far cover ${fmt(nCarded)} papers whose full text could be processed.`:''}</div>`;
+  // D16: the arXiv abstract when there is one (CC0), else the publisher's, labelled by where it came from
+  const sf=!a.ab&&a.ab2&&a.abk==='standfirst', COPY=' © the publisher or the authors; shown to identify the paper.';
+  const via=s=>s==='OpenAlex'?'Abstract as indexed by OpenAlex (supplied by the publisher).':s==='Crossref'?'Abstract as deposited by the publisher in Crossref.':`Abstract from ${s||'the publisher'}.`;
+  const abstract=a.ab
+    ?`<p class="prose">${esc(a.ab)}</p><p class="src">Abstract of the arXiv version, arXiv:${esc(a.a)} (arXiv metadata, CC0). The journal version's abstract can differ slightly.</p>`
+    :sf
+    ?`<p class="prose">${esc(a.ab2)}</p><p class="src">This piece has no author abstract; this is the journal's standfirst, written by its editors, from ${esc(a.absrc||'the publisher')}.${COPY}</p>`
+    :a.ab2
+    ?`<p class="prose">${esc(a.ab2)}</p><p class="src">${esc(via(a.absrc))}${COPY}</p>`
     :`<div class="empty">No abstract could be found for this paper (checked OpenAlex, Crossref and the publisher page). <a href="mailto:${MAIL}">Let us know</a> if you have a source.</div>`;
   $('#paperArt').innerHTML=`
     <div class="paper-head">
-      <span class="kick">${typeLabel(n.ty)} · ${esc(n.d||n.yr)}${n.vers>1?` · ${n.vers} records merged`:''}</span>
+      <span class="kick">${esc(typeText(n))} · <span title="${esc(yearTitle(n))}">${n.yr}</span></span>
       <h1>${esc(n.t)}</h1>
       <div class="authors">${esc(n.au)}</div>
       ${contactHTML(n)}
-      <div class="meta big">${n.v?`<i>${esc(n.v)}</i> · `:''}${n.yr}</div>
+      <div class="meta big">${venueHTML(n)}</div>
+      ${versionsHTML(n)}
       ${n.ms?`<span class="badge">Milestone · ${esc(n.ms)}</span>`:''}
       <div class="readbox"><span class="kick"><span class="dot" style="--dot:${ACC[n.ac][1]}"></span>${ACC[n.ac][0]}</span>${accessButtons(n)}</div>
       <div class="links"><a class="btn ghost sm" href="https://openalex.org/${n.id}" target="_blank" rel="noopener">OpenAlex ↗</a><a class="btn ghost sm" href="#map" data-map="${n.i}">Local graph in map</a></div>
@@ -1336,7 +1501,7 @@ function renderPaper(){
       <div class="tile"><span>Within-ASI citations per year</span><b>${n.py.toFixed(1)}</b></div>
     </div>
     <div class="two">
-      <section class="psec" id="absSec"><h2>Abstract</h2>${abstract}</section>
+      <section class="psec" id="absSec"><h2>${sf?'Standfirst':'Abstract'}</h2>${abstract}</section>
       <section class="psec"><h2>Paper card</h2>${cardHTML(n)||card}</section>
     </div>
     <section class="psec wide">${figuresHTML(n)}</section>
