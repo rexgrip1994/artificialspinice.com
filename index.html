@@ -470,9 +470,10 @@ img{max-width:100%}
       <div><label class="lab" for="yearMax">Published up to <b id="yearMaxV">2026</b></label><div class="row"><input type="range" id="yearMax" min="2006" max="2026" value="2026"><button class="btn-d" id="play" type="button">Play</button></div></div>
       <div><label class="lab" for="minC">At least <b id="minCV">0</b> citations within ASI</label><input type="range" id="minC" min="0" max="40" value="0"></div>
       <label class="chk"><input type="checkbox" id="showLinks" checked> Show citation links</label>
+      <label class="chk"><input type="checkbox" id="showTheses" checked> Show thesis links (thesis ↔ papers of its author)</label>
       <label class="chk"><input type="checkbox" id="showOrph"> Show unlinked papers (<span id="orphN"></span>)</label>
       <div class="legend" id="legend"></div>
-      <div class="edgekey"><span><i style="background:#F2A541"></i>cited by (hovered paper)</span><span><i style="background:#5CC8FF"></i>references (hovered paper)</span></div>
+      <div class="edgekey"><span><i style="background:#F2A541"></i>cited by (hovered paper)</span><span><i style="background:#5CC8FF"></i>references (hovered paper)</span><span><i style="background:repeating-linear-gradient(90deg,#7ED994 0 4px,transparent 4px 7px)"></i>thesis ↔ papers of its author (not a citation)</span></div>
       <div class="count" id="mapCount"></div>
     </div>
     <div class="map-wrap">
@@ -587,6 +588,7 @@ img{max-width:100%}
 <script src="figmeta.js"></script>
 <script src="contacts.js"></script>
 <script src="cards.js"></script>
+<script src="theses.js"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -617,14 +619,20 @@ const N=NODES, L=[];
 for(let k=0;k<EDGES.length;k+=2) L.push([EDGES[k],EDGES[k+1]]);
 const OUT=N.map(()=>[]), IN=N.map(()=>[]);
 for(const [s,t] of L){OUT[s].push(t);IN[t].push(s);}
-N.forEach(n=>{n.deg=OUT[n.i].length+IN[n.i].length;});
+/* thesis links (theses.js): a thesis and the site papers its author wrote as first author. Not citations (D3):
+   dashed on the map, listed in their own box on the paper page; theses count as papers everywhere else. */
+const TL=[], TLN=N.map(()=>[]);
+if(typeof THESIS_LINKS!=='undefined'){ const ix=new Map(N.map(n=>[n.id,n.i]));
+  for(const [t,ps] of Object.entries(THESIS_LINKS)){ const a=ix.get(t); if(a==null) continue;
+    for(const p of ps){ const b=ix.get(p); if(b==null||b===a) continue; TL.push([a,b]); TLN[a].push(b); TLN[b].push(a); } } }
+N.forEach(n=>{n.deg=OUT[n.i].length+IN[n.i].length+TLN[n.i].length;});
 const byC=(a,b)=>b.c-a.c||b.g-a.g;
 [...N].sort((a,b)=>b.g-a.g).forEach((n,k)=>n.gr=k+1);
 [...N].sort(byC).forEach((n,k)=>n.cr=k+1);
 const WANG=N.findIndex(n=>n.id==='W1981179226');
 const state={paper:WANG>=0?WANG:[...N].sort(byC)[0].i};
 const MS=N.filter(n=>n.ms).sort((a,b)=>(a.d||'').localeCompare(b.d||''));
-const orphN=N.filter(n=>n.deg===0).length;
+const orphN=N.filter(n=>n.deg===0&&n.ty!=='dissertation').length;  // theses are always shown
 const noRefs=N.filter(n=>n.nr===0).length;
 const merged=N.reduce((s,n)=>s+(n.vers-1),0);
 const maxOf={c:d3.max(N,n=>n.c)||1,g:d3.max(N,n=>n.g)||1,r:d3.max(N,n=>n.r)||1};
@@ -817,7 +825,7 @@ function copyText(text,btn){
 }
 
 /* ---------- graph core ---------- */
-const G={t:d3.zoomIdentity,colorBy:'topic',sizeBy:'c',layout:'net',yearMax:2026,minC:0,links:true,orph:false,hover:null,sel:null,local:false,depth:1,vis:new Uint8Array(N.length),lk:[],saved:null,fitted:false,userZoomed:false,hl:null,hlLabel:''};
+const G={t:d3.zoomIdentity,colorBy:'topic',sizeBy:'c',layout:'net',yearMax:2026,minC:0,links:true,tl:true,orph:false,hover:null,sel:null,local:false,depth:1,vis:new Uint8Array(N.length),lk:[],saved:null,fitted:false,userZoomed:false,hl:null,hlLabel:''};
 let pendingLocal=null;
 const rad=n=>2.2+13*Math.sqrt(n[G.sizeBy]/maxOf[G.sizeBy]);
 function colOf(n){
@@ -843,11 +851,12 @@ function applyLayoutForces(){
 applyLayoutForces();
 sim.on('tick',requestDraw);
 
-function baseSet(){return N.filter(n=>G.orph||n.deg>0);}
+function baseSet(){return N.filter(n=>G.orph||n.deg>0||n.ty==='dissertation');}  // theses always on the map
 function runSim(alpha){ sim.alpha(alpha); if(REDUCED){ for(let i=0;i<300;i++) sim.tick(); requestDraw(); } else sim.restart(); }
 function setSimNodes(nodes,alpha){
   const inSet=new Uint8Array(N.length); nodes.forEach(n=>inSet[n.i]=1);
   const links=[]; for(const [s,t] of L) if(inSet[s]&&inSet[t]) links.push({source:s,target:t});
+  for(const [s,t] of TL) if(inSet[s]&&inSet[t]) links.push({source:s,target:t,th:1});  // thesis links also pull theses next to their papers
   nodes.forEach(n=>{ if(n.x==null||isNaN(n.x)){ const a=Math.random()*6.2832, r=40+Math.random()*320; n.x=(G.layout==='time'?YX(n.yr):0)+Math.cos(a)*r; n.y=Math.sin(a)*r; } });
   sim.nodes(nodes); sim.force('link').links(links); G.lk=links;
   computeVis();
@@ -856,9 +865,10 @@ function setSimNodes(nodes,alpha){
 function computeVis(){
   G.vis.fill(0);
   for(const n of sim.nodes()) if(G.local||(n.yr<=G.yearMax&&n.c>=G.minC)) G.vis[n.i]=1;
-  let nv=0,lv=0; for(const n of sim.nodes()) if(G.vis[n.i]) nv++;
-  for(const l of G.lk) if(G.vis[l.source.i]&&G.vis[l.target.i]) lv++;
-  $('#mapCount').textContent=G.links?`${fmt(nv)} papers · ${fmt(lv)} citation links shown`:`${fmt(nv)} papers shown · citation links hidden (${fmt(lv)} among them)`;
+  let nv=0,lv=0,tv=0; for(const n of sim.nodes()) if(G.vis[n.i]) nv++;
+  for(const l of G.lk) if(G.vis[l.source.i]&&G.vis[l.target.i]){ if(l.th) tv++; else lv++; }
+  $('#mapCount').textContent=(G.links?`${fmt(nv)} papers · ${fmt(lv)} citation links shown`:`${fmt(nv)} papers shown · citation links hidden (${fmt(lv)} among them)`)+
+    (tv?` · ${fmt(tv)} thesis links${G.tl?'':' hidden'}`:'');
   renderLegend(); requestDraw();
 }
 let drawPending=false;
@@ -878,20 +888,31 @@ function drawGraph(ctx,w,h,t,opt){
   const f=opt.focus?(G.hover!=null?G.hover:G.sel):null;
   const focusOn=f!=null&&G.vis[f];
   let nb=null;
-  if(focusOn){ nb=new Set([f]); for(const j of OUT[f]) if(G.vis[j]) nb.add(j); for(const j of IN[f]) if(G.vis[j]) nb.add(j); }
+  if(focusOn){ nb=new Set([f]); for(const j of OUT[f]) if(G.vis[j]) nb.add(j); for(const j of IN[f]) if(G.vis[j]) nb.add(j);
+    if(G.tl) for(const j of TLN[f]) if(G.vis[j]) nb.add(j); }
   const hl=opt.focus&&!focusOn?G.hl:null;
   ctx.save(); ctx.translate(t.x,t.y); ctx.scale(t.k,t.k);
   if(G.links){
     ctx.lineWidth=0.6/t.k;
     ctx.strokeStyle=(focusOn||hl)?'rgba(140,155,185,0.035)':`rgba(140,155,185,${opt.linkAlpha||0.10})`;
     ctx.beginPath();
-    for(const l of G.lk){ const a=l.source,b=l.target; if(!G.vis[a.i]||!G.vis[b.i]) continue; ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); }
+    for(const l of G.lk){ const a=l.source,b=l.target; if(l.th||!G.vis[a.i]||!G.vis[b.i]) continue; ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); }
     ctx.stroke();
     if(hl){
       ctx.lineWidth=0.9/t.k; ctx.strokeStyle='rgba(201,167,255,0.45)'; ctx.beginPath();
-      for(const l of G.lk){ const a=l.source,b=l.target; if(!G.vis[a.i]||!G.vis[b.i]||!hl.has(a.i)||!hl.has(b.i)) continue; ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); }
+      for(const l of G.lk){ const a=l.source,b=l.target; if(l.th||!G.vis[a.i]||!G.vis[b.i]||!hl.has(a.i)||!hl.has(b.i)) continue; ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); }
       ctx.stroke();
     }
+  }
+  if(G.tl){  // thesis <-> papers of its author: dashed, never mistaken for a citation
+    ctx.lineWidth=0.9/t.k; ctx.setLineDash([3/t.k,2.5/t.k]);
+    ctx.strokeStyle=(focusOn||hl)?'rgba(126,217,148,0.10)':'rgba(126,217,148,0.55)';
+    ctx.beginPath();
+    for(const l of G.lk){ const a=l.source,b=l.target; if(!l.th||!G.vis[a.i]||!G.vis[b.i]) continue; ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); }
+    ctx.stroke();
+    if(focusOn){ const n=N[f]; ctx.lineWidth=1.3/t.k; ctx.strokeStyle='rgba(126,217,148,0.95)'; ctx.beginPath();
+      for(const j of TLN[f]) if(G.vis[j]){ctx.moveTo(n.x,n.y);ctx.lineTo(N[j].x,N[j].y);} ctx.stroke(); }
+    ctx.setLineDash([]);
   }
   if(focusOn){
     const n=N[f]; ctx.lineWidth=1.1/t.k;
@@ -1002,7 +1023,7 @@ function select(i){
 }
 function localNodes(){
   const seen=new Uint8Array(N.length); seen[G.sel]=1; let fr=[G.sel]; const out=[N[G.sel]];
-  for(let d=0;d<G.depth;d++){ const nx=[]; for(const i of fr) for(const j of OUT[i].concat(IN[i])) if(!seen[j]){seen[j]=1;nx.push(j);out.push(N[j]);} fr=nx; }
+  for(let d=0;d<G.depth;d++){ const nx=[]; for(const i of fr) for(const j of OUT[i].concat(IN[i],G.tl?TLN[i]:[])) if(!seen[j]){seen[j]=1;nx.push(j);out.push(N[j]);} fr=nx; }
   return out;
 }
 function enterLocal(){
@@ -1044,6 +1065,7 @@ function renderInfo(){
     <div class="mgrid"><div><b>${n.c}</b><span>within ASI · #${n.cr}</span></div><div><b>${fmt(n.g)}</b><span>global · #${n.gr}</span></div><div><b>${n.r}</b><span>cited 2024–26</span></div><div><b>${OUT[n.i].length}</b><span>ASI papers it cites</span></div></div>
     <div class="row"><button class="btn-d ${G.local?'on':''}" id="locBtn" type="button">${G.local?'Exit local graph':'Local graph'}</button><a class="btn-d" href="${hP(n.i)}">Paper page →</a></div>
     ${citing.length?`<div><span class="lab">Most-cited papers citing it</span><ol class="mini">${citing.map(m=>`<li><button data-sel="${m.i}" type="button">${esc(m.lab)}</button> ${esc(m.t)}</li>`).join('')}</ol></div>`:''}
+    ${TLN[n.i].length?`<div><span class="lab">${n.ty==='dissertation'?'Papers by the thesis author':'Thesis of the first author'}</span><ol class="mini">${TLN[n.i].map(i=>N[i]).sort((a,b)=>a.yr-b.yr).slice(0,6).map(m=>`<li><button data-sel="${m.i}" type="button">${esc(m.lab)}</button> ${esc(m.t)}</li>`).join('')}</ol></div>`:''}
     ${n.nr===0?`<p class="warn">OpenAlex has no reference list for this record, so the papers it cites are missing.</p>`:''}`;
   $('#infoX').onclick=()=>select(null);
   $('#locBtn').onclick=()=>{ if(G.local) exitLocal(); else enterLocal(); renderInfo(); };
@@ -1080,6 +1102,7 @@ $('#sizeBy').addEventListener('change',e=>{ G.sizeBy=e.target.value; sim.force('
 $('#yearMax').addEventListener('input',e=>{ G.yearMax=+e.target.value; $('#yearMaxV').textContent=G.yearMax; computeVis(); });
 $('#minC').addEventListener('input',e=>{ G.minC=+e.target.value; $('#minCV').textContent=G.minC; computeVis(); });
 $('#showLinks').addEventListener('change',e=>{ G.links=e.target.checked; computeVis(); });
+$('#showTheses').addEventListener('change',e=>{ G.tl=e.target.checked; computeVis(); });
 $('#showOrph').addEventListener('change',e=>{ G.orph=e.target.checked; if(!G.local) setSimNodes(baseSet(),0.35); });
 let playT=null;
 function stopPlay(){ if(playT){clearInterval(playT);playT=null;} $('#play').textContent='Play'; }
@@ -1252,7 +1275,7 @@ $('#more').onclick=()=>{B.shown+=25;renderResults();};
 const R={m:'c',since:0,type:'all'};
 function renderRank(){
   const key=R.m;
-  const ok=n=>R.type==='all'?!n.rv&&['article','conference-paper','book-chapter'].includes(n.ty):R.type==='review'?!!n.rv:n.ty===R.type;
+  const ok=n=>R.type==='all'?!n.rv&&['article','conference-paper','book-chapter','dissertation'].includes(n.ty):R.type==='review'?!!n.rv:n.ty===R.type;
   const arr=N.filter(n=>n.yr>=R.since&&ok(n)).sort((a,b)=>b[key]-a[key]||b.c-a.c).slice(0,30);
   const mx=d3.max(arr,n=>n.c)||1;
   $$('.rank th[data-k]').forEach(th=>th.classList.toggle('on',th.dataset.k===key));
@@ -1468,6 +1491,14 @@ document.addEventListener('click',e=>{
   out.textContent=c.e.map(p=>deob(p[1])).join(', '); out.hidden=false; b.hidden=true;
 });
 
+function thesisHTML(n){
+  const ps=TLN[n.i].map(i=>N[i]).sort((a,b)=>a.yr-b.yr||byC(a,b));
+  if(!ps.length) return '';
+  const th=n.ty==='dissertation';
+  return `<section class="psec wide"><h2>${th?'Papers by the thesis author on this site':ps.length>1?'Theses of the first author':'Thesis of the first author'}</h2>
+    <p class="meta">${th?'Papers on this site whose first author wrote this thesis.':'Written by this paper’s first author; a thesis usually gives the broader context of its papers.'} Matched by author profile or name, not by citation.</p>
+    <ol class="plist sm">${ps.map(li).join('')}</ol></section>`;
+}
 function renderPaper(){
   const n=N[state.paper], a=AC[n.i];
   const citing=IN[n.i].map(i=>N[i]).sort(byC), refs=OUT[n.i].map(i=>N[i]).sort(byC);
@@ -1504,6 +1535,7 @@ function renderPaper(){
       <section class="psec" id="absSec"><h2>${sf?'Standfirst':'Abstract'}</h2>${abstract}</section>
       <section class="psec"><h2>Paper card</h2>${cardHTML(n)||card}</section>
     </div>
+    ${thesisHTML(n)}
     <section class="psec wide">${figuresHTML(n)}</section>
     <section class="psec wide">
       <h2>Citation neighbourhood</h2>
