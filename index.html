@@ -853,9 +853,16 @@ const sim=d3.forceSimulation()
   .force('link',d3.forceLink().id(n=>n.i).distance(34))
   .force('collide',d3.forceCollide(n=>rad(n)+1.2))
   .alphaDecay(0.028).stop();
+/* "By year" layout: three rows by type (owner, 2026-10-01): reviews and book chapters on top, papers in the
+   middle, theses at the bottom; rows sit closer in the local graph, which has fewer papers */
+const ROWS=[['Reviews & book chapters',-1],['Papers',0],['Theses',1]];
+const rowOf=n=>n.ty==='dissertation'?1:(n.rv||n.ty==='book-chapter')?-1:0;
+const rowGap=()=>G.local?200:430;
+function setLinkForce(){ sim.force('link').links(G.layout==='time'?G.lk.filter(l=>!l.th):G.lk); }
 function applyLayoutForces(){
+  if(G.lk) setLinkForce();
   if(G.layout==='time'){
-    sim.force('x',d3.forceX(n=>YX(n.yr)).strength(0.6)).force('y',d3.forceY(0).strength(0.03));
+    sim.force('x',d3.forceX(n=>YX(n.yr)).strength(0.6)).force('y',d3.forceY(n=>rowOf(n)*rowGap()).strength(n=>rowOf(n)?0.22:0.04));
     sim.force('charge').strength(-22);
   }else{
     sim.force('x',d3.forceX(0).strength(0.045)).force('y',d3.forceY(0).strength(0.045));
@@ -870,9 +877,11 @@ function runSim(alpha){ sim.alpha(alpha); if(REDUCED){ for(let i=0;i<300;i++) si
 function setSimNodes(nodes,alpha){
   const inSet=new Uint8Array(N.length); nodes.forEach(n=>inSet[n.i]=1);
   const links=[]; for(const [s,t] of L) if(inSet[s]&&inSet[t]) links.push({source:s,target:t});
-  for(const [s,t] of TL) if(inSet[s]&&inSet[t]) links.push({source:s,target:t,th:1});  // thesis links also pull theses next to their papers
-  nodes.forEach(n=>{ if(n.x==null||isNaN(n.x)){ const a=Math.random()*6.2832, r=40+Math.random()*320; n.x=(G.layout==='time'?YX(n.yr):0)+Math.cos(a)*r; n.y=Math.sin(a)*r; } });
-  sim.nodes(nodes); sim.force('link').links(links); G.lk=links;
+  // thesis links also pull theses next to their papers (network layout only: in "By year" they would drag
+  // theses out of their row); they hold node objects so drawing works whether or not the force uses them
+  for(const [s,t] of TL) if(inSet[s]&&inSet[t]) links.push({source:N[s],target:N[t],th:1});
+  nodes.forEach(n=>{ if(n.x==null||isNaN(n.x)){ const a=Math.random()*6.2832, r=40+Math.random()*320; n.x=(G.layout==='time'?YX(n.yr):0)+Math.cos(a)*r; n.y=Math.sin(a)*r+(G.layout==='time'?rowOf(n)*rowGap():0); } });
+  sim.nodes(nodes); G.lk=links; setLinkForce();
   computeVis();
   runSim(alpha);
 }
@@ -898,6 +907,10 @@ function drawGraph(ctx,w,h,t,opt){
     ctx.strokeStyle='#161C28'; ctx.lineWidth=1; ctx.fillStyle='#5E677A'; ctx.font='11px "IBM Plex Mono", monospace'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
     const step=t.k<0.35?4:2;
     for(let yr=2006;yr<=2026;yr+=step){ const sx=t.applyX(YX(yr)); if(sx<-20||sx>w+20) continue; ctx.beginPath(); ctx.moveTo(sx,0); ctx.lineTo(sx,h); ctx.stroke(); ctx.fillText(yr,sx,h-10); }
+    ctx.setLineDash([2,5]);  // row separators and labels (reviews / papers / theses)
+    for(const r of [-0.5,0.5]){ const sy=t.applyY(r*rowGap()); if(sy<0||sy>h) continue; ctx.beginPath(); ctx.moveTo(0,sy); ctx.lineTo(w,sy); ctx.stroke(); }
+    ctx.setLineDash([]); ctx.textAlign='right'; ctx.font='11px "IBM Plex Sans", system-ui, sans-serif';  // right edge: the controls cover the left
+    for(const [lab,r] of ROWS){ const sy=t.applyY((r-0.5)*rowGap())+16; if(sy<12||sy>h-24) continue; ctx.fillText(lab.toUpperCase(),w-14,sy); }
   }
   const f=opt.focus?(G.hover!=null?G.hover:G.sel):null;
   const focusOn=f!=null&&G.vis[f];
@@ -905,28 +918,34 @@ function drawGraph(ctx,w,h,t,opt){
   if(focusOn){ nb=new Set([f]); for(const j of OUT[f]) if(G.vis[j]) nb.add(j); for(const j of IN[f]) if(G.vis[j]) nb.add(j);
     if(G.tl) for(const j of TLN[f]) if(G.vis[j]) nb.add(j); }
   const hl=opt.focus&&!focusOn?G.hl:null;
+  // what is on screen, in map coordinates: lines and dots entirely outside are skipped (keeps zooming smooth)
+  const vx0=t.invertX(-30), vx1=t.invertX(w+30), vy0=t.invertY(-30), vy1=t.invertY(h+30);
+  const off=(a,b)=>(a.x<vx0&&b.x<vx0)||(a.x>vx1&&b.x>vx1)||(a.y<vy0&&b.y<vy0)||(a.y>vy1&&b.y>vy1);
   ctx.save(); ctx.translate(t.x,t.y); ctx.scale(t.k,t.k);
   if(G.links){
     ctx.lineWidth=0.6/t.k;
     ctx.strokeStyle=(focusOn||hl)?'rgba(140,155,185,0.035)':`rgba(140,155,185,${opt.linkAlpha||0.10})`;
     ctx.beginPath();
-    for(const l of G.lk){ const a=l.source,b=l.target; if(l.th||!G.vis[a.i]||!G.vis[b.i]) continue; ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); }
+    for(const l of G.lk){ const a=l.source,b=l.target; if(l.th||!G.vis[a.i]||!G.vis[b.i]||off(a,b)) continue; ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); }
     ctx.stroke();
     if(hl){
       ctx.lineWidth=0.9/t.k; ctx.strokeStyle='rgba(201,167,255,0.45)'; ctx.beginPath();
-      for(const l of G.lk){ const a=l.source,b=l.target; if(l.th||!G.vis[a.i]||!G.vis[b.i]||!hl.has(a.i)||!hl.has(b.i)) continue; ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); }
+      for(const l of G.lk){ const a=l.source,b=l.target; if(l.th||!G.vis[a.i]||!G.vis[b.i]||!hl.has(a.i)||!hl.has(b.i)||off(a,b)) continue; ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); }
       ctx.stroke();
     }
   }
   if(G.tl){  // thesis <-> papers of its author: dashed, never mistaken for a citation
-    ctx.lineWidth=0.9/t.k; ctx.setLineDash([3/t.k,2.5/t.k]);
-    ctx.strokeStyle=(focusOn||hl)?'rgba(126,217,148,0.10)':'rgba(126,217,148,0.55)';
+    // dashes are laid out in screen pixels on the visible part of each line only: a dash pattern in map
+    // units made zoomed-in frames compute hundreds of thousands of dashes, mostly off screen
+    ctx.save(); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.setLineDash([4,3]);
+    const seg=(a,b)=>{ const c=clipSeg(t.applyX(a.x),t.applyY(a.y),t.applyX(b.x),t.applyY(b.y),w,h); if(c){ ctx.moveTo(c[0],c[1]); ctx.lineTo(c[2],c[3]); } };
+    ctx.lineWidth=0.9; ctx.strokeStyle=(focusOn||hl)?'rgba(126,217,148,0.10)':'rgba(126,217,148,0.55)';
     ctx.beginPath();
-    for(const l of G.lk){ const a=l.source,b=l.target; if(!l.th||!G.vis[a.i]||!G.vis[b.i]) continue; ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); }
+    for(const l of G.lk){ const a=l.source,b=l.target; if(!l.th||!G.vis[a.i]||!G.vis[b.i]||off(a,b)) continue; seg(a,b); }
     ctx.stroke();
-    if(focusOn){ const n=N[f]; ctx.lineWidth=1.3/t.k; ctx.strokeStyle='rgba(126,217,148,0.95)'; ctx.beginPath();
-      for(const j of TLN[f]) if(G.vis[j]){ctx.moveTo(n.x,n.y);ctx.lineTo(N[j].x,N[j].y);} ctx.stroke(); }
-    ctx.setLineDash([]);
+    if(focusOn){ const n=N[f]; ctx.lineWidth=1.3; ctx.strokeStyle='rgba(126,217,148,0.95)'; ctx.beginPath();
+      for(const j of TLN[f]) if(G.vis[j]) seg(n,N[j]); ctx.stroke(); }
+    ctx.restore();
   }
   if(focusOn){
     const n=N[f]; ctx.lineWidth=1.1/t.k;
@@ -936,7 +955,7 @@ function drawGraph(ctx,w,h,t,opt){
     for(const j of OUT[f]) if(G.vis[j]){ctx.moveTo(n.x,n.y);ctx.lineTo(N[j].x,N[j].y);} ctx.stroke();
   }
   for(const n of sim.nodes()){
-    if(!G.vis[n.i]) continue;
+    if(!G.vis[n.i]||n.x<vx0||n.x>vx1||n.y<vy0||n.y>vy1) continue;
     ctx.globalAlpha=nb?(nb.has(n.i)?1:0.15):hl?(hl.has(n.i)?1:0.12):1;
     ctx.fillStyle=colOf(n); nodePath(ctx,n,n.x,n.y,rad(n)); ctx.fill();
   }
@@ -950,6 +969,7 @@ function drawGraph(ctx,w,h,t,opt){
     if(nb){ list=[...nb].map(i=>N[i]).sort(byC).slice(0,28); if(!list.includes(N[f])) list.push(N[f]); forced=true; }
     else if(hl){ list=[...hl].map(i=>N[i]).filter(n=>G.vis[n.i]).sort(byC).slice(0,24); forced=true; }
     else list=sim.nodes();
+    const lab=[];
     for(const n of list){
       if(!G.vis[n.i]) continue;
       const rr=rad(n)*t.k;
@@ -957,10 +977,21 @@ function drawGraph(ctx,w,h,t,opt){
       if(a<=0.02) continue;
       const sx=t.applyX(n.x), sy=t.applyY(n.y)+rr+3;
       if(sx<-60||sx>w+60||sy<-20||sy>h+20) continue;
-      ctx.globalAlpha=a; ctx.fillStyle=n.i===f?'#FFFFFF':'#C4CCDA'; ctx.fillText(n.lab,sx,sy);
+      lab.push([n,a,sx,sy,rr]);
     }
+    if(!forced&&lab.length>200){ lab.sort((p,q)=>q[4]-p[4]); lab.length=200; }  // text is the costliest part of a frame
+    for(const [n,a,sx,sy] of lab){ ctx.globalAlpha=a; ctx.fillStyle=n.i===f?'#FFFFFF':'#C4CCDA'; ctx.fillText(n.lab,sx,sy); }
     ctx.globalAlpha=1;
   }
+}
+/* the part of segment (x0,y0)-(x1,y1) inside the screen rectangle (Liang-Barsky), or null */
+function clipSeg(x0,y0,x1,y1,w,h){
+  let t0=0,t1=1; const dx=x1-x0, dy=y1-y0;
+  for(const [p,q] of [[-dx,x0+10],[dx,w+10-x0],[-dy,y0+10],[dy,h+10-y0]]){
+    if(p===0){ if(q<0) return null; continue; }
+    const r=q/p; if(p<0){ if(r>t1) return null; if(r>t0) t0=r; } else { if(r<t0) return null; if(r<t1) t1=r; }
+  }
+  return [x0+t0*dx,y0+t0*dy,x0+t1*dx,y0+t1*dy];
 }
 function fitT(w,h,pad,left,right,only){
   let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
@@ -1046,8 +1077,9 @@ function enterLocal(){
   G.local=true;
   for(const n of N){n.fx=null;n.fy=null;}
   const ns=localNodes(), c=N[G.sel], cx0=G.layout==='time'?YX(c.yr):0;
-  ns.forEach(n=>{ const a=Math.random()*6.2832, r=60+Math.random()*200; n.x=(G.layout==='time'?YX(n.yr):cx0)+Math.cos(a)*r*(G.layout==='time'?0.2:1); n.y=Math.sin(a)*r; n.vx=0; n.vy=0; });
-  c.x=cx0;c.y=0;c.fx=cx0;c.fy=0;
+  ns.forEach(n=>{ const a=Math.random()*6.2832, r=60+Math.random()*200; n.x=(G.layout==='time'?YX(n.yr):cx0)+Math.cos(a)*r*(G.layout==='time'?0.2:1); n.y=Math.sin(a)*r*(G.layout==='time'?0.4:1)+(G.layout==='time'?rowOf(n)*rowGap():0); n.vx=0; n.vy=0; });
+  const cy0=G.layout==='time'?rowOf(c)*rowGap():0;
+  c.x=cx0;c.y=cy0;c.fx=cx0;c.fy=cy0;
   setSimNodes(ns,1);
   if(!REDUCED){ sim.stop(); for(let i=0;i<70;i++) sim.tick(); sim.restart(); }
   fit(true); setTimeout(()=>{ if(G.local) fit(true); },1300);
