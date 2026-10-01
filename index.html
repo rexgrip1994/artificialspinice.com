@@ -142,6 +142,8 @@ select,input[type=search],input[type=text]{font:inherit;font-size:14px;padding:8
 .count{font-family:var(--mono);font-size:11.5px;color:var(--map-muted);border-top:1px solid var(--map-line);padding-top:10px}
 .edgekey{display:grid;gap:3px;font-size:12px;color:var(--map-muted)}
 .edgekey i{display:inline-block;width:18px;height:2px;vertical-align:middle;margin-right:7px}
+.shapekey{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--map-muted)}
+.shapekey svg{width:12px;height:12px;vertical-align:-1px;margin-right:5px;fill:var(--map-muted)}
 .search{position:relative}
 .sres{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#131824;border:1px solid var(--map-line);border-radius:8px;z-index:5;max-height:300px;overflow:auto}
 .sres button{display:block;width:100%;text-align:left;font:inherit;font-size:12.5px;color:var(--map-muted);background:none;border:0;border-bottom:1px solid var(--map-line);padding:7px 10px;cursor:pointer}
@@ -474,6 +476,7 @@ img{max-width:100%}
       <label class="chk"><input type="checkbox" id="showOrph"> Show unlinked papers (<span id="orphN"></span>)</label>
       <div class="legend" id="legend"></div>
       <div class="edgekey"><span><i style="background:#F2A541"></i>cited by (hovered paper)</span><span><i style="background:#5CC8FF"></i>references (hovered paper)</span><span><i style="background:repeating-linear-gradient(90deg,#7ED994 0 4px,transparent 4px 7px)"></i>thesis ↔ papers of its author (not a citation)</span></div>
+      <div class="shapekey"><span><svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.5"/></svg>paper</span><span><svg viewBox="0 0 12 12" aria-hidden="true"><polygon points="6,0.8 11.2,10 0.8,10"/></svg>thesis</span><span><svg viewBox="0 0 12 12" aria-hidden="true"><polygon points="11,6 8.5,10.3 3.5,10.3 1,6 3.5,1.7 8.5,1.7"/></svg>review or book chapter</span></div>
       <div class="count" id="mapCount"></div>
     </div>
     <div class="map-wrap">
@@ -828,6 +831,16 @@ function copyText(text,btn){
 const G={t:d3.zoomIdentity,colorBy:'topic',sizeBy:'c',layout:'net',yearMax:2026,minC:0,links:true,tl:true,orph:false,hover:null,sel:null,local:false,depth:1,vis:new Uint8Array(N.length),lk:[],saved:null,fitted:false,userZoomed:false,hl:null,hlLabel:''};
 let pendingLocal=null;
 const rad=n=>2.2+13*Math.sqrt(n[G.sizeBy]/maxOf[G.sizeBy]);
+/* node shape by type (owner, 2026-10-01): papers circles, theses triangles, reviews and book chapters hexagons;
+   polygons are scaled to the circle's area, so size still means the same */
+const shapeOf=n=>n.ty==='dissertation'?3:(n.rv||n.ty==='book-chapter')?6:0;
+function nodePath(c,n,x,y,r){
+  const s=shapeOf(n); c.beginPath();
+  if(!s){ c.arc(x,y,r,0,6.2832); return; }
+  const R=r*(s===3?1.55:1.1), a0=s===3?-Math.PI/2:0;
+  for(let k=0;k<s;k++){ const a=a0+k*2*Math.PI/s, px=x+R*Math.cos(a), py=y+R*Math.sin(a); if(k) c.lineTo(px,py); else c.moveTo(px,py); }
+  c.closePath();
+}
 function colOf(n){
   if(G.colorBy==='year') return yearColor(n.yr);
   if(G.colorBy==='access') return ACC[n.ac][1];
@@ -924,11 +937,11 @@ function drawGraph(ctx,w,h,t,opt){
   for(const n of sim.nodes()){
     if(!G.vis[n.i]) continue;
     ctx.globalAlpha=nb?(nb.has(n.i)?1:0.15):hl?(hl.has(n.i)?1:0.12):1;
-    ctx.fillStyle=colOf(n); ctx.beginPath(); ctx.arc(n.x,n.y,rad(n),0,6.2832); ctx.fill();
+    ctx.fillStyle=colOf(n); nodePath(ctx,n,n.x,n.y,rad(n)); ctx.fill();
   }
   ctx.globalAlpha=1;
-  if(hl){ ctx.lineWidth=1.3/t.k; ctx.strokeStyle='#C9A7FF'; for(const n of sim.nodes()){ if(!G.vis[n.i]||!hl.has(n.i)) continue; ctx.beginPath(); ctx.arc(n.x,n.y,rad(n)+2/t.k,0,6.2832); ctx.stroke(); } }
-  if(opt.focus&&G.sel!=null&&G.vis[G.sel]){ const n=N[G.sel]; ctx.lineWidth=2/t.k; ctx.strokeStyle='#FFFFFF'; ctx.beginPath(); ctx.arc(n.x,n.y,rad(n)+3/t.k,0,6.2832); ctx.stroke(); }
+  if(hl){ ctx.lineWidth=1.3/t.k; ctx.strokeStyle='#C9A7FF'; for(const n of sim.nodes()){ if(!G.vis[n.i]||!hl.has(n.i)) continue; nodePath(ctx,n,n.x,n.y,rad(n)+2/t.k); ctx.stroke(); } }
+  if(opt.focus&&G.sel!=null&&G.vis[G.sel]){ const n=N[G.sel]; ctx.lineWidth=2/t.k; ctx.strokeStyle='#FFFFFF'; nodePath(ctx,n,n.x,n.y,rad(n)+3/t.k); ctx.stroke(); }
   ctx.restore();
   if(opt.labels){
     ctx.font='500 11px "IBM Plex Sans", system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
@@ -1153,7 +1166,7 @@ function drawHero(){
   hcx.lineWidth=0.6/k; hcx.strokeStyle='rgba(140,155,185,0.12)'; hcx.beginPath();
   for(const [s,t] of L){ const a=P[s], b=P[t]; if(a&&b){ hcx.moveTo(a[0],a[1]); hcx.lineTo(b[0],b[1]); } }
   hcx.stroke();
-  for(const n of N){ const p=P[n.i]; if(!p) continue; hcx.fillStyle=colOf(n); hcx.beginPath(); hcx.arc(p[0],p[1],rad(n),0,6.2832); hcx.fill(); }
+  for(const n of N){ const p=P[n.i]; if(!p) continue; hcx.fillStyle=colOf(n); nodePath(hcx,n,p[0],p[1],rad(n)); hcx.fill(); }
   hcx.restore();
 }
 window.addEventListener('resize',()=>{ if(current==='home') requestDraw(); if(current==='paper'){ drawMini(N[state.paper]); fitCard(); } });
@@ -1590,10 +1603,10 @@ function drawMini(n){
     for(const o of nodes){
       ctx.globalAlpha=h&&h!==o&&o!==c0?0.45:1;
       ctx.fillStyle=o.rel===0?'#FFFFFF':o.rel<0?'#5CC8FF':'#F2A541';
-      ctx.beginPath(); ctx.arc(t.applyX(o.x),t.applyY(o.y),R(o),0,6.2832); ctx.fill();
+      nodePath(ctx,o.n,t.applyX(o.x),t.applyY(o.y),R(o)); ctx.fill();
     }
     ctx.globalAlpha=1;
-    if(h){ ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(t.applyX(h.x),t.applyY(h.y),R(h)+3,0,6.2832); ctx.stroke(); }
+    if(h){ ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=2; nodePath(ctx,h.n,t.applyX(h.x),t.applyY(h.y),R(h)+3); ctx.stroke(); }
     ctx.font='500 11px "IBM Plex Sans", system-ui, sans-serif'; ctx.textBaseline='top';
     for(const o of nodes){
       if(!(top.has(o)||R(o)>6||o===h)) continue;
