@@ -431,7 +431,7 @@ img{max-width:100%}
     <div class="gsearch" role="search"><input type="search" id="gq" placeholder="Title, author, journal or year" autocomplete="off" aria-label="Search papers by title, author, journal or year (shortcut: /)"><div class="gres" id="gres" hidden></div></div>
   </div>
 </header>
-<div class="mockbar"><span class="tag">Live</span><span id="mockText"></span><span>Paper cards last updated September 28, 2026.</span></div>
+<div class="mockbar"><span class="tag">Live</span><span id="mockText"></span><span>Last updated October 1, 2026.</span></div>
 
 <main>
 <!-- HOME -->
@@ -769,7 +769,7 @@ gres.addEventListener('click',e=>{
 document.addEventListener('click',e=>{ if(!e.target.closest('.gsearch')) gres.hidden=true; });
 document.addEventListener('keydown',e=>{ if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){ e.preventDefault(); gq.focus(); } });
 
-$('#mockText').textContent=`${fmt(N.length)} works and ${fmt(L.length)} citation links from OpenAlex (September 2026). `+(nCarded?'Topics and lattices come from the paper cards where available, otherwise from title keywords.':'Topics and lattices are guessed from title keywords.');
+$('#mockText').textContent=`${fmt(N.length)} works and ${fmt(L.length)} citation links from OpenAlex, refreshed weekly. `+(nCarded?'Topics and lattices come from the paper cards where available, otherwise from title keywords.':'Topics and lattices are guessed from title keywords.');
 $('#homeLede').textContent=`An early preview built from ${fmt(N.length)} works found in OpenAlex: searchable, ranked by citations from within the field, linked in one citation map, with free versions and abstracts.`+
   (nCarded?` ${fmt(nCarded)} of them already have a paper card (lattice, techniques, materials, methods, each value backed by a quote from the paper); cards for the rest are in progress.`:'');
 $('#homeStats').innerHTML=[[fmt(N.length),'works'],[fmt(L.length),'citation links within ASI'],[MS.length,'milestones'],[Math.round(100*freeN/N.length)+' %','free to read']].map(([v,l])=>`<div><dt>${l}</dt><dd>${v}</dd></div>`).join('');
