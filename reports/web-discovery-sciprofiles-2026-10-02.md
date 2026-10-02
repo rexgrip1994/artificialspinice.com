@@ -2,7 +2,7 @@
 
 **Result: no records found in this slice.**
 
-- Queries run: 43 (site: operator and allowed_domains filter, ASI terms, lattice names, monopoles, magnonics, reservoir computing, 3D ASI, colloidal/vortex ice, mechanical metamaterials, Rydberg/qubit ice, and author names such as Nisoli, Farhan, Chern, Libál, Reichhardt, Gilbert, Morley, Budrikis, Bang, Lao, Bhat, Saccone).
+- Queries run: 41 (site: operator and allowed_domains filter, ASI terms, lattice names, monopoles, magnonics, reservoir computing, 3D ASI, colloidal/vortex ice, mechanical metamaterials, Rydberg/qubit ice, and author names such as Nisoli, Farhan, Chern, Libál, Reichhardt, Gilbert, Morley, Budrikis, Bang, Lao, Bhat, Saccone).
 - Not one result URL came from sciprofiles.com, scilit.com or encyclopedia.pub. The search backend returned arXiv, PMC, university repositories, APS meeting archives and similar for every query, including with the domain filter. These three sites appear not to be indexed by the search tool.
 - Finds: 0 (counts by record type and relevance: all zero). On-site hits: 0.
 - OpenAlex tools were available but unused, since there were no candidate records to look up.
