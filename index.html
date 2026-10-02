@@ -16,7 +16,7 @@
 /* D14: one dark look, regardless of the viewer's theme */
 :root{
   --gut:clamp(16px,3vw,36px);
-  --bg:#0D1016; --surface:#151922; --surface-2:#1C212C; --ink:#E6E9F0; --muted:#9AA3B5; --faint:#6B7488; --line:#272E3B;
+  --bg:#0D1016; --surface:#151922; --surface-2:#1C212C; --ink:#E6E9F0; --muted:#9AA3B5; --faint:#8089A0; --line:#272E3B;  /* faint: 5.4:1 on bg, 4.6:1 on surface-2 (WCAG AA) */
   --accent:#8FA7FF; --accent-ink:#0D1016; --accent-soft:#1D2642;
   --plus:#F07A63; --minus:#6FA3F6;
   --human:#7BD88F; --ai:#C9A7FF;
@@ -58,6 +58,9 @@ p{margin:0}
 .mockbar .tag{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;padding:2px 7px;border:1px solid var(--line);border-radius:4px}
 .notechip{background:var(--note-bg);border:1px solid var(--note-line);color:var(--note-ink);padding:0 7px;border-radius:4px}
 main{max-width:1320px;margin:0 auto;padding-block:18px 72px}
+main:focus{outline:none}
+.skip{position:absolute;left:8px;top:-48px;z-index:100;background:var(--surface);color:var(--ink);padding:8px 14px;border:1px solid var(--accent);border-radius:7px}
+.skip:focus{top:8px}
 
 /* shared */
 .page-head{display:grid;gap:8px;margin-block:10px 24px}
@@ -118,7 +121,7 @@ select,input[type=search],input[type=text]{font:inherit;font-size:14px;padding:8
 /* map */
 .map-shell{position:relative;background:var(--map-bg);color:var(--map-ink);border-radius:12px;overflow:hidden;border:1px solid #1B2130;
   --seg-line:var(--map-line);--seg-muted:var(--map-muted);--seg-on:#242C3D;--seg-ink:var(--map-ink)}
-.map-wrap{position:relative;height:clamp(520px,78vh,880px)}
+.map-wrap{position:relative;height:clamp(480px,calc(100vh - 290px),880px)}  /* whole map visible below the page head */
 #mapCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
 .panel{position:absolute;top:12px;z-index:2;background:var(--map-panel);border:1px solid var(--map-line);border-radius:10px;padding:14px;font-size:13px;display:grid;gap:13px;max-height:calc(100% - 24px);overflow:auto;align-content:start}
 .map-ctrl{left:12px;width:256px}
@@ -177,22 +180,28 @@ select,input[type=search],input[type=text]{font:inherit;font-size:14px;padding:8
 @media (max-width:980px){.notes-row{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:820px){
   .map-shell{display:flex;flex-direction:column}
+  .map-wrap{order:-1}  /* phones and tablets: the map first, the controls below it */
   .panel{position:static;width:auto;max-height:none;border-radius:0;border-width:0 0 1px 0}
-  .map-info{border-width:1px 0 0 0}
+  .map-info{order:-1;border-width:1px 0 0 0}
   .map-wrap{height:64vh;min-height:360px}
   .localchip{top:8px}
+  .zoombtns button{min-width:44px;height:44px}
 }
 
 /* browse */
 .browse{display:grid;grid-template-columns:220px minmax(0,1fr);gap:28px;align-items:start}
 @media (max-width:760px){.browse{grid-template-columns:minmax(0,1fr)}}
 .facets{display:grid;gap:18px;font-size:13.5px}
-.fgroup h5{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;font-weight:500}
+.fgroup h2{font-family:var(--mono);font-size:11px;line-height:inherit;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;font-weight:500}
 .fopt{display:flex;align-items:center;gap:8px;padding:2px 0;cursor:pointer}
 .fopt input{accent-color:var(--accent);margin:0}
 .fopt .c{margin-left:auto;color:var(--faint);font-family:var(--mono);font-size:12px}
 .fgroup:not(.open) .fopt.xtra{display:none}
 .fmore{font:inherit;font-size:12.5px;background:none;border:0;padding:2px 0;color:var(--accent);cursor:pointer}
+@media (pointer:coarse){  /* touch screens: tap targets near 44 px */
+  .fopt{padding:9px 0} .fopt input{width:18px;height:18px} .fmore{padding:12px 0}
+  .zoombtns button{min-width:44px;height:44px} .seg button{min-height:40px}
+}
 .fcards{border-top:1px solid var(--line);padding-top:12px}
 .hint{font-size:12px;color:var(--faint);margin-top:2px}
 .yrsel{display:flex;gap:6px;align-items:center}
@@ -251,7 +260,8 @@ table.rank{width:100%;border-collapse:collapse;min-width:720px}
 .tl li:last-child .rail::before{bottom:0}
 .tl .rail::after{content:"";position:absolute;left:4px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--surface);border:2px solid var(--accent)}
 .tl li.bg .rail::after{border:2px dashed var(--faint)}
-.tl li.bg .body{opacity:.72}
+.tl li.bg .body{opacity:.86}  /* dimmed, but small text keeps ≥ 4.5:1 contrast */
+.nfnote{margin:18px 0 0;padding:12px 16px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;background:var(--surface)}
 .tl .body{display:grid;gap:3px}
 .tl .note{font-size:15.5px}
 .tl .lab{font-size:13px;color:var(--muted)}
@@ -416,6 +426,7 @@ img{max-width:100%}
 </style>
 </head>
 <body>
+<a class="skip" href="#" id="skipLink">Skip to content</a>
 <header class="top">
   <div class="top-in">
     <a class="brand" href="#home" aria-label="artificialspinice.com home">
@@ -430,20 +441,21 @@ img{max-width:100%}
     <nav id="nav" aria-label="Pages">
       <a href="#home">Home</a><a href="#map">Map</a><a href="#browse">Browse</a><a href="#rankings">Rankings</a><a href="#timeline">Timeline</a><a href="#stats">Statistics</a><a href="#disclaimer">Disclaimer</a>
     </nav>
-    <div class="gsearch" role="search"><input type="search" id="gq" placeholder="Title, author, journal or year" autocomplete="off" aria-label="Search papers by title, author, journal or year (shortcut: /)"><div class="gres" id="gres" hidden></div></div>
+    <div class="gsearch" role="search" aria-label="Site search"><input type="search" id="gq" placeholder="Title, author, journal or year" autocomplete="off" aria-label="Search papers by title, author, journal or year (shortcut: /)"><div class="gres" id="gres" hidden></div></div>
   </div>
 </header>
-<div class="mockbar"><span class="tag">Live</span><span id="mockText"></span><span>Last updated October 1, 2026.</span></div>
+<div class="mockbar" role="region" aria-label="Site status"><span class="tag">Live</span><span id="mockText"></span><span>Last updated October 2, 2026.</span></div>
 
 <main>
 <!-- HOME -->
 <section id="v-home" class="view">
+  <div class="nfnote" id="nfNote" role="status" hidden></div>
   <div class="hero">
     <div>
       <p class="kick" style="margin-bottom:12px">Artificial spin ice, 2006 to today</p>
       <h1>The artificial spin ice literature, mapped by who cites whom.</h1>
       <p class="lede" id="homeLede"></p>
-      <form class="searchbar" id="homeSearch" role="search">
+      <form class="searchbar" id="homeSearch" role="search" aria-label="Search from the home page">
         <input type="search" id="homeQ" placeholder="Title, author, journal or year" aria-label="Search the library by title, author, journal or year">
         <button class="btn" type="submit">Search</button>
       </form>
@@ -481,7 +493,7 @@ img{max-width:100%}
       <div class="count" id="mapCount"></div>
     </div>
     <div class="map-wrap">
-      <canvas id="mapCanvas" aria-label="Citation graph of artificial spin ice papers"></canvas>
+      <canvas id="mapCanvas" tabindex="0" role="application" aria-roledescription="citation map" aria-label="Citation graph of artificial spin ice papers. Use the arrow keys or n and p to step through the papers, Enter to open one, Escape to clear; or use the search above."></canvas>
       <div class="localchip" id="localChip" hidden></div>
       <div class="tip" id="tip" hidden></div>
       <div class="zoombtns"><button id="zin" type="button" aria-label="Zoom in">+</button><button id="zout" type="button" aria-label="Zoom out">−</button><button id="zfit" type="button">Fit</button></div>
@@ -496,7 +508,7 @@ img{max-width:100%}
   <div class="with-notes">
     <div class="browse">
       <div class="fcol">
-        <div class="fsearch" role="search"><input type="search" id="fq" placeholder="Title, author, journal or year" autocomplete="off" aria-label="Search by title, author, journal or year"><p class="fjump meta"><span id="resN2"></span><button type="button" class="btn ghost sm" id="toRes">Show results ↓</button></p></div>
+        <div class="fsearch" role="search" aria-label="Filter the paper list"><input type="search" id="fq" placeholder="Title, author, journal or year" autocomplete="off" aria-label="Search by title, author, journal or year"><p class="fjump meta"><span id="resN2"></span><button type="button" class="btn ghost sm" id="toRes">Show results ↓</button></p></div>
         <details class="fdetails" id="fdetails" open><summary>Filters<span class="fact" id="fActive"></span></summary><aside class="facets" id="facets" aria-label="Filters"></aside></details>
       </div>
       <div>
@@ -528,7 +540,7 @@ img{max-width:100%}
   <div class="page-head"><h1>Timeline</h1><p>Growth of the field and the results that shaped it. Milestones are flagged and annotated by hand. Years are journal issue years, as papers are cited; the paper page also shows the first-online date.</p></div>
   <div class="with-notes">
     <div>
-      <div class="chartbox"><div class="chart" id="chart"></div><div class="chartkey"><span><i style="background:var(--accent)"></i>Papers per year in the corpus</span><span><i style="background:var(--plus);transform:rotate(45deg)"></i>Year with a milestone</span><span><i style="background:var(--accent);opacity:.4"></i>2026 so far</span></div></div>
+      <div class="chartbox" tabindex="0" role="region" aria-label="Papers per year (scrolls sideways on small screens)"><div class="chart" id="chart"></div><div class="chartkey"><span><i style="background:var(--accent)"></i>Papers per year in the corpus</span><span><i style="background:var(--plus);transform:rotate(45deg)"></i>Year with a milestone</span><span><i style="background:var(--accent);opacity:.4"></i>2026 so far</span></div></div>
       <ol class="tl" id="tl"></ol>
     </div>
   </div>
@@ -680,7 +692,8 @@ function fold(s){
     .replace(/[^\p{L}\p{N}]+/gu,' ')
     .replace(/\S+/g,w=>/[a-z]/.test(w)&&/[Ͱ-ϿЀ-ӿ]/.test(w)?w.replace(/[Ͱ-ϿЀ-ӿ]/g,c=>CONF[c]||c):w).trim();
 }
-const qTokens=q=>{ const f=fold(q); return f?f.split(' '):[]; };
+// one-letter words would match almost everything ("a&b"); only the word being typed may be that short
+const qTokens=q=>{ const f=fold(q); if(!f) return []; const t=f.split(' '); return t.filter((w,i)=>w.length>1||i===t.length-1); };
 const matchQ=(n,toks)=>toks.every(t=>n.sx.includes(' '+t));
 const relQ=(n,toks)=>toks.reduce((a,t)=>a+(n.sx.includes(' '+t+' ')?1:0),0);
 const byRel=toks=>(a,b)=>relQ(b,toks)-relQ(a,toks)||byC(a,b);
@@ -688,9 +701,12 @@ function searchN(q){ const toks=qTokens(q); return toks.length?N.filter(n=>match
 // the card's lattice as a short name only: the long vocabulary labels ("Kagome (islands on honeycomb edges)") and the free-text
 // names of "other" lattices ("…, not kagome geometry") would make words like islands, edges, on or kagome match papers that do not use them
 const lattWords=v=>v.v==='other'?String((v.p&&v.p.name)||'').replace(/\s*[(,;:].*$/,''):LATT[v.v]?LATT[v.v][0]:String((CL.lattice&&CL.lattice.values&&CL.lattice.values[v.v])||v.v).replace(/\s*[(/].*$/,'');
-N.forEach(n=>{ n.sx=' '+fold([n.t,n.au,n.v,n.yr,n.yo||'',...usedVals(n,'lattice').map(lattWords)].join(' '))+' '; });
+// searchable text: title, authors, venue, years, card lattices, the DOI, and "asi" for "artificial … ice" titles
+N.forEach(n=>{ const ft=fold(n.t); n.sx=' '+fold([n.t,n.au,n.v,n.yr,n.yo||'',...usedVals(n,'lattice').map(lattWords),n.doi||'',n.id].join(' '))+
+  (/\bartificial\b/.test(ft)&&/\bice\b/.test(ft)?' asi':'')+' '; });
 
 function authorsTxt(n){
+  if(!n.na||!n.fa) return '<span class="faint">Authors not listed</span>';
   if(n.na>2) return `${esc(n.fa)} … ${esc(n.la)} <span class="faint">(${n.na} authors)</span>`;
   if(n.na===2) return `${esc(n.fa)}, ${esc(n.la)}`;
   return esc(n.fa);
@@ -760,8 +776,10 @@ function accessButtons(n){
 /* site-wide search (header dropdown) */
 const gq=$('#gq'), gres=$('#gres');
 function gsearch(){
-  const q=gq.value.trim(), all=q.length<2?null:searchN(q);
-  if(!all){gres.hidden=true;return;}
+  const q=gq.value.trim();
+  if(q.length<2){ gres.hidden=true; gres.innerHTML=''; gres.dataset.n=0; return; }  // no stale results for Enter to open
+  const all=searchN(q)||[];
+  gres.dataset.n=all.length;
   gres.innerHTML=all.length
     ?`<div class="gh">Papers</div>`+all.slice(0,10).map(n=>`<a href="${hP(n.i)}"><b>${esc(n.lab)}</b> ${esc(n.t)}</a>`).join('')+
       `<a href="#browse" data-bq="${esc(q)}"><b>All ${fmt(all.length)} ${all.length===1?'match':'matches'} in Browse →</b></a>`
@@ -771,7 +789,8 @@ function gsearch(){
 gq.addEventListener('input',gsearch);
 gq.addEventListener('focus',gsearch);
 gq.addEventListener('keydown',e=>{
-  if(e.key==='Enter'){ const a=gres.querySelector('a'); if(a){ e.preventDefault(); a.click(); gq.blur(); } }
+  // Enter: the paper when there is exactly one match, otherwise the full list in Browse (e.g. all papers of an author)
+  if(e.key==='Enter'){ const a=+gres.dataset.n===1?gres.querySelector('a'):gres.querySelector('a[data-bq]'); if(a){ e.preventDefault(); a.click(); gq.blur(); } }
   if(e.key==='Escape'){ gres.hidden=true; gq.blur(); }
 });
 gres.addEventListener('click',e=>{
@@ -796,17 +815,26 @@ $('#capNote').textContent=`${noRefs} of ${N.length} records (${Math.round(100*no
 /* ---------- router ---------- */
 const VIEWS=['home','map','browse','rankings','timeline','stats','paper','disclaimer'];
 function route(h){
-  const m=/^paper-(W\d+)$/.exec(h); if(!m) return h;
-  let id=m[1];
+  state.notFound=null;
+  const m=/^paper-(w\d+)$/i.exec(h); if(!m) return h;
+  let id=m[1].toUpperCase();
   // a merged (superseded) record's old link: show the kept record and fix the address bar
   if(!byWid.has(id)&&byWid.has(AL[id])){ id=AL[id]; history.replaceState(null,'','#paper-'+id); }
-  if(byWid.has(id)){ state.paper=byWid.get(id); return 'paper'; }
-  return h;
+  if(byWid.has(id)){ if(id!==m[1]) history.replaceState(null,'','#paper-'+id); state.paper=byWid.get(id); return 'paper'; }
+  state.notFound=m[1]; return 'home';  // a removed or mistyped record: say so on Home instead of failing silently
 }
+const TITLES={map:'Citation map',browse:'Browse',rankings:'Rankings',timeline:'Timeline',stats:'Statistics',disclaimer:'Disclaimer'};
 let current=null;
+$('#skipLink').onclick=e=>{ e.preventDefault(); const m=$('main'); m.tabIndex=-1; m.focus(); };  // hash links are routes here, so focus by script
 function show(v){
   if(!VIEWS.includes(v)) v='home';
   current=v;
+  if(v!=='map'&&EC.cv){ EC.cv.width=EC.cv.height=0; EC.cv=null; EC.epoch=-1; }  // free the edge bitmap off the map
+  const part=v==='paper'?(n=>`${n.lab}: ${n.t.length>90?n.t.slice(0,88)+'…':n.t}`)(N[state.paper]):TITLES[v];
+  document.title=part?`${part} · artificialspinice.com`:'artificialspinice.com';  // bookmarks, history, screen readers
+  const nf=$('#nfNote');
+  nf.hidden=!(v==='home'&&state.notFound);
+  if(!nf.hidden) nf.innerHTML=`There is no paper <b>${esc(state.notFound)}</b> on this site. It may have been merged with another record or removed. Search below, or <a href="mailto:${MAIL}">tell us</a> what you were looking for.`;
   VIEWS.forEach(x=>{$('#v-'+x).hidden=x!==v;});
   $$('#nav a').forEach(a=>{ if(a.getAttribute('href')==='#'+v) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
   window.scrollTo(0,0);
@@ -882,7 +910,7 @@ function applyLayoutForces(){
   }
 }
 applyLayoutForces();
-sim.on('tick',requestDraw);
+sim.on('tick',()=>{ edgeEpoch++; requestDraw(); });
 
 function baseSet(){return N.filter(n=>G.orph||n.deg>0||n.ty==='dissertation');}  // theses always on the map
 function runSim(alpha){ sim.alpha(alpha); if(REDUCED){ for(let i=0;i<300;i++) sim.tick(); requestDraw(); } else sim.restart(); }
@@ -904,12 +932,72 @@ function computeVis(){
   for(const l of G.lk) if(G.vis[l.source.i]&&G.vis[l.target.i]){ if(l.th) tv++; else lv++; }
   $('#mapCount').textContent=(G.links?`${fmt(nv)} papers · ${fmt(lv)} citation links shown`:`${fmt(nv)} papers shown · citation links hidden (${fmt(lv)} among them)`)+
     (tv?` · ${fmt(tv)} thesis links${G.tl?'':' hidden'}`:'');
-  renderLegend(); requestDraw();
+  edgeEpoch++; renderLegend(); requestDraw();
 }
 let drawPending=false;
 function requestDraw(){
   if(drawPending) return; drawPending=true;
   requestAnimationFrame(()=>{drawPending=false; if(current==='map') drawMain(); else if(current==='home') drawHero();});
+}
+/* citation lines are ~95% of a frame's raster cost (every other part together is a few ms; profiled 2026-10-01,
+   cloud report map-performance), so they are drawn in screen space with each segment clipped to the visible
+   rectangle (off-screen tails used to be rasterised too) and, on the main map, kept in an offscreen bitmap (EC)
+   that is blitted while the view is zooming or panning or only the hover changes, and rebuilt when the view
+   settles. edgeEpoch counts every change to node positions or visibility, so the bitmap is never stale; while the
+   simulation runs it is not used. */
+let edgeEpoch=0, gestureUntil=0, gestureTimer=0;
+const EC={cv:null,cx:null,epoch:-1,t:null,w:0,h:0,dpr:0,mx:0,my:0};
+const CLIP=[0,0,0,0];
+function clipRect(ax,ay,bx,by,x0,y0,x1,y1){  // Liang-Barsky against a rectangle, result in CLIP
+  let t0=0,t1=1; const dx=bx-ax, dy=by-ay;
+  const P=[-dx,dx,-dy,dy], Q=[ax-x0,x1-ax,ay-y0,y1-ay];
+  for(let i=0;i<4;i++){
+    const p=P[i], q=Q[i];
+    if(p===0){ if(q<0) return false; continue; }
+    const r=q/p; if(p<0){ if(r>t1) return false; if(r>t0) t0=r; } else { if(r<t0) return false; if(r<t1) t1=r; }
+  }
+  CLIP[0]=ax+t0*dx; CLIP[1]=ay+t0*dy; CLIP[2]=ax+t1*dx; CLIP[3]=ay+t1*dy; return true;
+}
+function strokeEdges(c,t,x0,y0,x1,y1,alpha){  // screen rectangle x0..x1, y0..y1 (css px); c maps css px to pixels
+  const k=t.k, tx=t.x, ty=t.y, vis=G.vis;
+  c.lineWidth=0.6; c.strokeStyle=`rgba(140,155,185,${alpha})`; c.beginPath();
+  for(const l of G.lk){
+    if(l.th) continue; const a=l.source, b=l.target; if(!vis[a.i]||!vis[b.i]) continue;
+    let ax=tx+k*a.x, ay=ty+k*a.y, bx=tx+k*b.x, by=ty+k*b.y;
+    if((ax<x0&&bx<x0)||(ax>x1&&bx>x1)||(ay<y0&&by<y0)||(ay>y1&&by>y1)) continue;
+    if(ax<x0||ax>x1||ay<y0||ay>y1||bx<x0||bx>x1||by<y0||by>y1){ if(!clipRect(ax,ay,bx,by,x0,y0,x1,y1)) continue; ax=CLIP[0]; ay=CLIP[1]; bx=CLIP[2]; by=CLIP[3]; }
+    c.moveTo(ax,ay); c.lineTo(bx,by);
+  }
+  c.stroke();
+}
+function buildEdgeCache(t,w,h,dpr){
+  let mx=Math.round(w*0.3), my=Math.round(h*0.3);
+  if((w+2*mx)*(h+2*my)*dpr*dpr>16e6){ mx=0; my=0; }
+  const cw=Math.round((w+2*mx)*dpr), ch=Math.round((h+2*my)*dpr);
+  if(!EC.cv){ EC.cv=document.createElement('canvas'); EC.cx=EC.cv.getContext('2d'); }
+  if(EC.cv.width!==cw||EC.cv.height!==ch){ EC.cv.width=cw; EC.cv.height=ch; } else { EC.cx.setTransform(1,0,0,1,0,0); EC.cx.clearRect(0,0,cw,ch); }
+  EC.cx.setTransform(dpr,0,0,dpr,mx*dpr,my*dpr);
+  strokeEdges(EC.cx,t,-mx-10,-my-10,w+mx+10,h+my+10,0.10);
+  EC.t=t; EC.epoch=edgeEpoch; EC.w=w; EC.h=h; EC.dpr=dpr; EC.mx=mx; EC.my=my;
+}
+/* draws the citation lines from the bitmap; false when the caller should stroke them directly (simulation running) */
+function blitEdges(ctx,t,w,h,dpr,dim){
+  const moving=performance.now()<gestureUntil;
+  let ok=EC.cv&&EC.epoch===edgeEpoch&&EC.w===w&&EC.h===h&&EC.dpr===dpr, r=1;
+  if(ok){
+    r=t.k/EC.t.k;
+    if(!(r===1&&t.x===EC.t.x&&t.y===EC.t.y)){
+      const ux=x=>(x-t.x)/r+EC.t.x+EC.mx, uy=y=>(y-t.y)/r+EC.t.y+EC.my;  // screen -> cache css px
+      ok=moving&&r>0.55&&r<2&&ux(0)>=0&&ux(w)<=w+2*EC.mx&&uy(0)>=0&&uy(h)<=h+2*EC.my;
+    }
+  }
+  if(!ok){
+    if(sim.alpha()>=sim.alphaMin()) return false;
+    buildEdgeCache(t,w,h,dpr); r=1;
+  }
+  ctx.save(); ctx.setTransform(dpr*r,0,0,dpr*r,dpr*(t.x-r*(EC.t.x+EC.mx)),dpr*(t.y-r*(EC.t.y+EC.my)));
+  ctx.globalAlpha=dim?0.35:1; ctx.drawImage(EC.cv,0,0,EC.cv.width/EC.dpr,EC.cv.height/EC.dpr); ctx.restore();
+  return true;
 }
 function drawGraph(ctx,w,h,t,opt){
   const dpr=opt.dpr;
@@ -938,11 +1026,11 @@ function drawGraph(ctx,w,h,t,opt){
   const off=(a,b)=>(a.x<vx0&&b.x<vx0)||(a.x>vx1&&b.x>vx1)||(a.y<vy0&&b.y<vy0)||(a.y>vy1&&b.y>vy1);
   ctx.save(); ctx.translate(t.x,t.y); ctx.scale(t.k,t.k);
   if(G.links){
-    ctx.lineWidth=0.6/t.k;
-    ctx.strokeStyle=(focusOn||hl)?'rgba(140,155,185,0.035)':`rgba(140,155,185,${opt.linkAlpha||0.10})`;
-    ctx.beginPath();
-    for(const l of G.lk){ const a=l.source,b=l.target; if(l.th||!G.vis[a.i]||!G.vis[b.i]||off(a,b)) continue; ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); }
-    ctx.stroke();
+    if(!(opt.cache&&blitEdges(ctx,t,w,h,dpr,focusOn||hl))){
+      ctx.save(); ctx.setTransform(dpr,0,0,dpr,0,0);
+      strokeEdges(ctx,t,-10,-10,w+10,h+10,(focusOn||hl)?0.035:0.10);
+      ctx.restore();
+    }
     if(hl){
       ctx.lineWidth=0.9/t.k; ctx.strokeStyle='rgba(201,167,255,0.45)'; ctx.beginPath();
       for(const l of G.lk){ const a=l.source,b=l.target; if(l.th||!G.vis[a.i]||!G.vis[b.i]||!hl.has(a.i)||!hl.has(b.i)||off(a,b)) continue; ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); }
@@ -994,8 +1082,14 @@ function drawGraph(ctx,w,h,t,opt){
       if(sx<-60||sx>w+60||sy<-20||sy>h+20) continue;
       lab.push([n,a,sx,sy,rr]);
     }
-    if(!forced&&lab.length>200){ lab.sort((p,q)=>q[4]-p[4]); lab.length=200; }  // text is the costliest part of a frame
-    for(const [n,a,sx,sy] of lab){ ctx.globalAlpha=a; ctx.fillStyle=n.i===f?'#FFFFFF':'#C4CCDA'; ctx.fillText(n.lab,sx,sy); }
+    lab.sort((p,q)=>(q[0].i===f)-(p[0].i===f)||q[4]-p[4]);  // the focused paper first, then the biggest nodes
+    if(!forced&&lab.length>200) lab.length=200;  // text is the costliest part of a frame
+    const boxes=[];  // greedy: skip a label that would overlap one already drawn
+    for(const [n,a,sx,sy] of lab){
+      const hw=(n._lw??=ctx.measureText(n.lab).width)/2+2;
+      if(boxes.some(b=>sx-hw<b[2]&&sx+hw>b[0]&&sy<b[3]&&sy+13>b[1])) continue;
+      boxes.push([sx-hw,sy,sx+hw,sy+13]);
+      ctx.globalAlpha=a; ctx.fillStyle=n.i===f?'#FFFFFF':'#C4CCDA'; ctx.fillText(n.lab,sx,sy); }
     ctx.globalAlpha=1;
   }
 }
@@ -1021,8 +1115,9 @@ function fitT(w,h,pad,left,right,only){
 const cv=$('#mapCanvas'), cx=cv.getContext('2d');
 let W=0,H=0,DPR=1;
 function sizeMain(){ const r=cv.getBoundingClientRect(); DPR=window.devicePixelRatio||1; W=r.width; H=r.height; cv.width=Math.max(1,Math.round(W*DPR)); cv.height=Math.max(1,Math.round(H*DPR)); }
-function drawMain(){ if(!W) return; drawGraph(cx,W,H,G.t,{labels:true,focus:true,axis:true,dpr:DPR}); }
-const zoom=d3.zoom().scaleExtent([0.03,12]).on('zoom',e=>{G.t=e.transform; if(e.sourceEvent) G.userZoomed=true; requestDraw();});
+function drawMain(){ if(!W) return; drawGraph(cx,W,H,G.t,{labels:true,focus:true,axis:true,dpr:DPR,cache:true}); }
+const zoom=d3.zoom().scaleExtent([0.03,12]).on('zoom',e=>{G.t=e.transform; if(e.sourceEvent) G.userZoomed=true;
+  gestureUntil=performance.now()+160; clearTimeout(gestureTimer); gestureTimer=setTimeout(requestDraw,180); requestDraw();});
 function hit(sx,sy){
   const x=G.t.invertX(sx), y=G.t.invertY(sy); let best=null,bd=Infinity;
   for(const n of sim.nodes()){ if(!G.vis[n.i]) continue; const d=Math.hypot(n.x-x,n.y-y)-rad(n); if(d<bd){bd=d;best=n;} }
@@ -1031,7 +1126,7 @@ function hit(sx,sy){
 const drag=d3.drag()
   .subject(e=>{ const n=hit(e.x,e.y); return n?{n,x:G.t.applyX(n.x),y:G.t.applyY(n.y)}:null; })
   .on('start',e=>{ if(!e.active&&!REDUCED) sim.alphaTarget(0.12).restart(); const n=e.subject.n; n.fx=n.x; n.fy=n.y; })
-  .on('drag',e=>{ const n=e.subject.n; n.fx=G.t.invertX(e.x); n.fy=G.t.invertY(e.y); if(REDUCED){n.x=n.fx;n.y=n.fy;requestDraw();} })
+  .on('drag',e=>{ const n=e.subject.n; n.fx=G.t.invertX(e.x); n.fy=G.t.invertY(e.y); if(REDUCED){n.x=n.fx;n.y=n.fy;edgeEpoch++;requestDraw();} })
   .on('end',e=>{ if(!e.active) sim.alphaTarget(0); const n=e.subject.n; if(!(G.local&&n.i===G.sel)){n.fx=null;n.fy=null;} });
 d3.select(cv).call(drag).call(zoom).on('dblclick.zoom',null);
 function fit(anim,only){
@@ -1123,7 +1218,7 @@ function renderInfo(){
   el.innerHTML=`<div class="info-top"><span class="kick">${esc(typeText(n))} · ${n.yr}</span><button class="x" id="infoX" type="button" aria-label="Close details">×</button></div>
     <h3>${esc(n.t)}</h3><div class="meta">${metaLine(n)}</div>
     ${n.ms?`<div class="msline">Milestone: ${esc(n.ms)}</div>`:''}
-    <div class="mgrid"><div><b>${n.c}</b><span>within ASI · #${n.cr}</span></div><div><b>${fmt(n.g)}</b><span>global · #${n.gr}</span></div><div><b>${n.r}</b><span>cited 2024–26</span></div><div><b>${OUT[n.i].length}</b><span>ASI papers it cites</span></div></div>
+    <div class="mgrid"><div><b>${n.c}</b><span>within ASI · #${n.cr}</span></div><div><b>${fmt(n.g)}</b><span>global · #${n.gr}</span></div><div><b>${n.r}</b><span>cited 2024–26</span></div><div><b>${OUT[n.i].length}</b><span>ASI paper${OUT[n.i].length===1?'':'s'} it cites</span></div></div>
     <div class="row"><button class="btn-d ${G.local?'on':''}" id="locBtn" type="button">${G.local?'Exit local graph':'Local graph'}</button><a class="btn-d" href="${hP(n.i)}">Paper page →</a></div>
     ${citing.length?`<div><span class="lab">Most-cited papers citing it</span><ol class="mini">${citing.map(m=>`<li><button data-sel="${m.i}" type="button">${esc(m.lab)}</button> ${esc(m.t)}</li>`).join('')}</ol></div>`:''}
     ${TLN[n.i].length?`<div><span class="lab">${n.ty==='dissertation'?'Papers by the thesis author':'Thesis of the first author'}</span><ol class="mini">${TLN[n.i].map(i=>N[i]).sort((a,b)=>a.yr-b.yr).slice(0,6).map(m=>`<li><button data-sel="${m.i}" type="button">${esc(m.lab)}</button> ${esc(m.t)}</li>`).join('')}</ol></div>`:''}
@@ -1156,6 +1251,28 @@ sIn.addEventListener('input',()=>{
   sRes.hidden=false;
 });
 sRes.addEventListener('click',e=>{ const b=e.target.closest('[data-go]'); if(!b) return; sRes.hidden=true; sIn.value=''; focusNode(+b.dataset.go); });
+sIn.addEventListener('keydown',e=>{  // Enter picks the first hit, Escape closes the list (as in the header search)
+  if(e.key==='Enter'){ const b=sRes.querySelector('[data-go]'); if(b){ e.preventDefault(); b.click(); } }
+  if(e.key==='Escape'){ sRes.hidden=true; }
+});
+document.addEventListener('click',e=>{ if(!e.target.closest('#mapCtrl .search')) sRes.hidden=true; });
+/* keyboard use of the map: Tab to the canvas, then arrows or n/p step through the visible papers (largest first),
+   Enter opens the selected paper's page, Escape clears the selection */
+cv.addEventListener('keydown',e=>{
+  const step=e.key==='ArrowRight'||e.key==='ArrowDown'||e.key==='n'?1:e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='p'?-1:0;
+  if(step){
+    e.preventDefault();
+    const vis=sim.nodes().filter(n=>G.vis[n.i]).sort(byC);
+    if(!vis.length) return;
+    const k=G.sel==null?-1:vis.findIndex(n=>n.i===G.sel);
+    focusNode(vis[(k+step+vis.length)%vis.length].i);
+  } else if(e.key==='Enter'&&G.sel!=null){ location.hash=hP(G.sel).slice(1); }
+  else if(e.key==='Escape'&&G.sel!=null){ select(null); }
+});
+// toggle buttons tell screen readers which option is on (they only had the .on class)
+const syncPressed=()=>$$('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.classList.contains('on')?'true':'false'));
+new MutationObserver(syncPressed).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+syncPressed();
 function segPick(id,cb){ $(id).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; $$(id+' button').forEach(x=>x.classList.toggle('on',x===b)); cb(b.dataset.v); }); }
 segPick('#colorBy',v=>{ G.colorBy=v; renderLegend(); requestDraw(); });
 segPick('#layoutBy',v=>{ if(v===G.layout) return; G.layout=v; applyLayoutForces(); G.userZoomed=false; if(G.local){ enterLocal(); } else runSim(0.9); });
@@ -1262,7 +1379,7 @@ function facetCounts(key){
 const GTOT={}; ['tp','lt','ty'].forEach(k=>{ GTOT[k]=new Map(); N.forEach(n=>facetVals(n,k).forEach(v=>GTOT[k].set(v,(GTOT[k].get(v)||0)+1))); });
 function facetGroup(title,key,entries,hint){
   const cnt=facetCounts(key), cap=entries.length>8, open=B.open.has(key);
-  return `<div class="fgroup${open?' open':''}"><h5>${title}</h5>${entries.map(([k,lab,c,tt],j)=>`<label class="fopt${cap&&j>=6&&!B[key].has(k)?' xtra':''}"${tt?` title="${esc(tt)}"`:''}><input type="checkbox" data-f="${key}" value="${esc(k)}" ${B[key].has(k)?'checked':''}>${c?`<span class="dot" style="--dot:${c}"></span>`:''}${esc(lab)}<span class="c">${cnt.get(k)||0}</span></label>`).join('')}${cap?`<button type="button" class="fmore" data-more="${key}" aria-expanded="${open}">${open?'Show fewer':`Show all ${entries.length}`}</button>`:''}${hint?`<p class="hint">${hint}</p>`:''}</div>`;
+  return `<div class="fgroup${open?' open':''}"><h2>${title}</h2>${entries.map(([k,lab,c,tt],j)=>`<label class="fopt${cap&&j>=6&&!B[key].has(k)?' xtra':''}"${tt?` title="${esc(tt)}"`:''}><input type="checkbox" data-f="${key}" value="${esc(k)}" ${B[key].has(k)?'checked':''}>${c?`<span class="dot" style="--dot:${c}"></span>`:''}${esc(lab)}<span class="c">${cnt.get(k)||0}</span></label>`).join('')}${cap?`<button type="button" class="fmore" data-more="${key}" aria-expanded="${open}">${open?'Show fewer':`Show all ${entries.length}`}</button>`:''}${hint?`<p class="hint">${hint}</p>`:''}</div>`;
 }
 const byTot=(M,key,none)=>[...Object.entries(M).filter(([k])=>GTOT[key].get(k)).sort((a,b)=>GTOT[key].get(b[0])-GTOT[key].get(a[0])).map(([k,[l,c]])=>[k,l,c]),['_',none,NONE[1]]];
 function cardGroup(f,title){
@@ -1279,8 +1396,8 @@ function renderFacets(){
     facetGroup('Lattice','lt',byTot(LATT,'lt','Not known'),hy)+
     facetGroup('Free to read','ac',Object.entries(ACC).map(([k,[l,c]])=>[k,l,c]))+
     facetGroup('Type','ty',[...Object.entries(TYPES),['other','Other']].filter(([k])=>GTOT.ty.get(k)).map(([k,l])=>[k,l,null,k==='review'?'Reviews, perspectives, colloquia and roadmaps, of any publication form':null]))+
-    `<div class="fgroup fyear"><h5>Year</h5><div class="yrsel"><select id="fy0" aria-label="From year">${opt(B.y0)}</select><span class="faint">to</span><select id="fy1" aria-label="To year">${opt(B.y1)}</select></div></div>`+
-    (nCarded?`<div class="fgroup fcards"><h5>From paper cards</h5><p class="hint">${fmt(nCarded)} of ${fmt(N.length)} papers have a card so far. Only what a paper itself did counts, not methods it only cites. Ticking any of these leaves out papers without a card.</p></div>`+
+    `<div class="fgroup fyear"><h2>Year</h2><div class="yrsel"><select id="fy0" aria-label="From year">${opt(B.y0)}</select><span class="faint">to</span><select id="fy1" aria-label="To year">${opt(B.y1)}</select></div></div>`+
+    (nCarded?`<div class="fgroup fcards"><h2>From paper cards</h2><p class="hint">${fmt(nCarded)} of ${fmt(N.length)} papers have a card so far. Only what a paper itself did counts, not methods it only cites. Ticking any of these leaves out papers without a card.</p></div>`+
       CF.map(([f,t])=>cardGroup(f,t)).join(''):'');
   // an inverted range (From after To) is swapped rather than giving 0 results
   const yr=()=>{ if(B.y0>B.y1) [B.y0,B.y1]=[B.y1,B.y0]; B.shown=25; renderBrowse(); };
@@ -1579,7 +1696,7 @@ function renderPaper(){
     <div class="paper-head">
       <span class="kick">${esc(typeText(n))} · <span title="${esc(yearTitle(n))}">${n.yr}</span></span>
       <h1>${esc(n.t)}</h1>
-      <div class="authors">${esc(n.au)}</div>
+      <div class="authors">${n.au?esc(n.au):'<span class="faint">Authors not listed</span>'}</div>
       ${contactHTML(n)}
       <div class="meta big">${venueHTML(n)}</div>
       ${versionsHTML(n)}
@@ -1601,8 +1718,8 @@ function renderPaper(){
     <section class="psec wide">${figuresHTML(n)}</section>
     <section class="psec wide">
       <h2>Citation neighbourhood</h2>
-      <p class="meta">Time runs left to right: on the left (blue) the ASI papers it cites, on the right (amber) the ASI papers citing it. Up to 100 shown, largest first. Scroll to zoom, drag to move, hover a dot for its title, click to open it.</p>
-      <div class="minimap wide"><canvas id="miniMap" aria-label="Mini citation map"></canvas><div class="tip minitip" hidden></div><div class="zoombtns"><button type="button" class="mz" data-z="in" aria-label="Zoom in">+</button><button type="button" class="mz" data-z="out" aria-label="Zoom out">−</button><button type="button" class="mz" data-z="fit">Fit</button></div></div>
+      ${refs.length+citing.length?`<p class="meta">Time runs left to right: on the left (blue) the ASI papers it cites, on the right (amber) the ASI papers citing it. Up to 100 shown, largest first. Scroll to zoom, drag to move, hover a dot for its title, click to open it.</p>
+      <div class="minimap wide"><canvas id="miniMap" aria-label="Mini citation map"></canvas><div class="tip minitip" hidden></div><div class="zoombtns"><button type="button" class="mz" data-z="in" aria-label="Zoom in">+</button><button type="button" class="mz" data-z="out" aria-label="Zoom out">−</button><button type="button" class="mz" data-z="fit">Fit</button></div></div>`:'<p class="meta">No citation links to or from other ASI papers yet, so there is no neighbourhood map.</p>'}
       <div class="two even">
         <section class="psec"><h3>Cites within ASI<span class="num">${refs.length}</span></h3>${refs.length?`<ol class="plist sm">${refs.slice(0,10).map(li).join('')}</ol>`:`<p class="meta">${n.nr===0?'OpenAlex has no reference list for this record.':'No references inside the corpus.'}</p>`}</section>
         <section class="psec"><h3>Cited within ASI by<span class="num">${citing.length}</span></h3>${citing.length?`<ol class="plist sm">${citing.slice(0,10).map(li).join('')}</ol>`:'<p class="meta">No citing papers in the corpus yet.</p>'}</section>
