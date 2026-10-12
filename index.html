@@ -361,6 +361,18 @@ table.rank{width:100%;border-collapse:collapse;min-width:720px}
 .jtable table.rank{min-width:520px}
 .jtip{position:fixed}
 .disc{max-width:70ch;display:grid;gap:16px;margin-block:18px 24px}
+.contrib{max-width:960px}
+.contrib ol.steps{margin:0;padding-left:1.3em;display:grid;gap:6px}
+.wanted-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:6px}
+.wanted-tools input{flex:1 1 260px;min-width:0;font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.wanted{width:100%;border-collapse:collapse;font-size:14px}
+.wanted th,.wanted td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.wanted th{font-weight:500;color:var(--muted);font-size:12.5px}
+.wanted td.fn{font-family:var(--mono);white-space:nowrap}
+.wanted td.act{white-space:nowrap}
+.wanted .meta{color:var(--muted);font-size:12.5px}
+.wanted-wrap{overflow-x:auto}
+@media (max-width:640px){.wanted .hide-s{display:none}}
 .disc h1{font-size:clamp(28px,3.4vw,40px)}
 
 /* paper page layout, figures, contact */
@@ -439,7 +451,7 @@ img{max-width:100%}
       <span class="word">artificialspinice<span class="tld">.com</span></span>
     </a>
     <nav id="nav" aria-label="Pages">
-      <a href="#home">Home</a><a href="#map">Map</a><a href="#browse">Browse</a><a href="#rankings">Rankings</a><a href="#timeline">Timeline</a><a href="#stats">Statistics</a><a href="#disclaimer">Disclaimer</a>
+      <a href="#home">Home</a><a href="#map">Map</a><a href="#browse">Browse</a><a href="#rankings">Rankings</a><a href="#timeline">Timeline</a><a href="#stats">Statistics</a><a href="#disclaimer">Disclaimer</a><a href="#contribute">Contribute</a>
     </nav>
     <div class="gsearch" role="search" aria-label="Site search"><input type="search" id="gq" placeholder="Title, author, journal or year" autocomplete="off" aria-label="Search papers by title, author, journal or year (shortcut: /)"><div class="gres" id="gres" hidden></div></div>
   </div>
@@ -575,6 +587,31 @@ img{max-width:100%}
   </article>
 </section>
 
+<!-- CONTRIBUTE -->
+<section id="v-contribute" class="view" hidden>
+  <article class="disc contrib">
+    <h1>Contribute full texts</h1>
+    <p class="prose">Every paper on this site can get a <b>paper card</b>: a structured summary of what the paper actually did (lattice, material, fabrication, state preparation, imaging and measurement, simulation, observables), where every value is backed by a one-sentence quote from the paper. Cards are made from the full text, and for the <b id="wantN">…</b> papers listed below we do not have it yet, mostly because they are not open access.</p>
+    <p class="prose">If you have the PDF of any of these papers, in particular your own, we would be grateful if you sent it.</p>
+    <h2>How to send a paper</h2>
+    <ol class="steps prose">
+      <li>Save the PDF under the name in the <b>Save as</b> column, for example <code>W1234567890.pdf</code>. Supplementary material goes in a second file, <code>W1234567890_SI.pdf</code>.</li>
+      <li>Email the file(s) to <span class="mail">info@artificialspinice.com</span>. Several papers in one email are fine; the <b>Send</b> link opens an email with the paper's name already in the subject.</li>
+    </ol>
+    <h2>What happens with the file</h2>
+    <ul class="prose">
+      <li>The full text of a closed-access paper is <b>never published or shared</b>. It is stored privately and used only to generate the paper card.</li>
+      <li>The site shows only the card (short facts, each with its one-sentence evidence quote and page) and links to the publisher and to free versions. PDFs are never hosted on the site.</li>
+      <li>An accepted manuscript or arXiv version is ideal. If you post one on arXiv or an institutional repository, the paper page will also link it as a free version.</li>
+    </ul>
+    <div class="fix"><span><b>Send to</b>&nbsp; <span class="mail">info@artificialspinice.com</span></span><button class="btn ghost sm" type="button" data-copy="info@artificialspinice.com">Copy address</button></div>
+    <h2>Papers we are looking for</h2>
+    <p class="meta">Most cited within the artificial spin ice literature first. The list updates itself when a card is added.</p>
+    <div class="wanted-tools"><input type="search" id="wantQ" placeholder="Filter by title, author, journal, year or ID" autocomplete="off" aria-label="Filter the list of wanted papers"><span class="meta" id="wantShown"></span></div>
+    <div class="wanted-wrap"><table class="wanted" id="wantTable"><thead><tr><th>Paper</th><th class="hide-s">Published in</th><th>Save as</th><th></th></tr></thead><tbody></tbody></table></div>
+  </article>
+</section>
+
 <!-- PAPER -->
 <section id="v-paper" class="view" hidden>
   <div class="with-notes">
@@ -606,6 +643,7 @@ img{max-width:100%}
 <script src="contacts.js"></script>
 <script src="cards.js"></script>
 <script src="theses.js"></script>
+<script src="wanted.js"></script>
 <script>
 (function(){
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -812,8 +850,24 @@ $('#orphN').textContent=orphN;
 $('#mergeN').textContent=`${merged} duplicate records merged into ${Object.keys(VS).length} works`;
 $('#capNote').textContent=`${noRefs} of ${N.length} records (${Math.round(100*noRefs/N.length)} %) have no reference list in OpenAlex, mostly preprints, theses and conference papers. ${orphN} have no link at all and are hidden by default.`;
 
+/* ---------- contribute (owner, 2026-10-12): papers whose full text is wanted, from wanted.js ---------- */
+const WANT=(typeof WANTED!=='undefined'?WANTED:[]).filter(id=>byWid.has(id)).map(id=>N[byWid.get(id)]);
+function renderContribute(){
+  $('#wantN').textContent=fmt(WANT.length);
+  const q=$('#wantQ').value.trim(), toks=qTokens(q), hits=toks.length?WANT.filter(n=>matchQ(n,toks)||n.id.toLowerCase().includes(q.toLowerCase())):WANT;
+  $('#wantShown').textContent=q?`${fmt(hits.length)} of ${fmt(WANT.length)} shown`:`${fmt(WANT.length)} papers`;
+  $('#wantTable tbody').innerHTML=hits.map(n=>{
+    const subj=encodeURIComponent(`Full text for artificialspinice.com: ${n.id} (${n.lab})`);
+    const doi=n.doi?`<a href="https://doi.org/${esc(n.doi)}" target="_blank" rel="noopener">DOI</a>`:'';
+    return `<tr><td><a href="${hP(n.i)}">${esc(n.lab)}</a> ${esc(n.t)}<div class="meta">${esc(typeText(n))}${doi?' · '+doi:''}</div></td>`+
+      `<td class="hide-s">${esc(n.v||'')}</td><td class="fn">${esc(n.id)}.pdf</td>`+
+      `<td class="act"><a href="mailto:${MAIL}?subject=${subj}">Send</a></td></tr>`;
+  }).join('');
+}
+$('#wantQ').addEventListener('input',renderContribute);
+
 /* ---------- router ---------- */
-const VIEWS=['home','map','browse','rankings','timeline','stats','paper','disclaimer'];
+const VIEWS=['home','map','browse','rankings','timeline','stats','paper','disclaimer','contribute'];
 function route(h){
   state.notFound=null;
   const m=/^paper-(w\d+)$/i.exec(h); if(!m) return h;
@@ -823,7 +877,7 @@ function route(h){
   if(byWid.has(id)){ if(id!==m[1]) history.replaceState(null,'','#paper-'+id); state.paper=byWid.get(id); return 'paper'; }
   state.notFound=m[1]; return 'home';  // a removed or mistyped record: say so on Home instead of failing silently
 }
-const TITLES={map:'Citation map',browse:'Browse',rankings:'Rankings',timeline:'Timeline',stats:'Statistics',disclaimer:'Disclaimer'};
+const TITLES={map:'Citation map',browse:'Browse',rankings:'Rankings',timeline:'Timeline',stats:'Statistics',disclaimer:'Disclaimer',contribute:'Contribute'};
 let current=null;
 $('#skipLink').onclick=e=>{ e.preventDefault(); const m=$('main'); m.tabIndex=-1; m.focus(); };  // hash links are routes here, so focus by script
 function show(v){
@@ -843,6 +897,7 @@ function show(v){
   if(v==='paper') renderPaper();
   if(v==='timeline') renderChart();
   if(v==='stats') renderJournals();
+  if(v==='contribute') renderContribute();
 }
 window.addEventListener('hashchange',()=>show(route(location.hash.slice(1))));
 document.addEventListener('click',e=>{
