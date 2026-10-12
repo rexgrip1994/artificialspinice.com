@@ -361,8 +361,15 @@ table.rank{width:100%;border-collapse:collapse;min-width:720px}
 .jtable table.rank{min-width:520px}
 .jtip{position:fixed}
 .disc{max-width:70ch;display:grid;gap:16px;margin-block:18px 24px}
-.contrib{max-width:960px}
-.contrib ol.steps{margin:0;padding-left:1.3em;display:grid;gap:6px}
+.contrib-grid{display:grid;grid-template-columns:minmax(280px,400px) minmax(0,1fr);gap:24px 44px;align-items:start;margin-block:18px 24px}
+.contrib-text{margin:0;max-width:none}
+.contrib-text h1{margin-bottom:2px}
+.contrib-text ul,.contrib-text ol{margin:0;padding-left:1.2em;display:grid;gap:6px}
+.contrib-list{min-width:0;display:grid;gap:8px;position:sticky;top:72px}
+.contrib-list h2{margin:0}
+.contrib-list .wanted-wrap{max-height:calc(100vh - 230px);overflow:auto;border:1px solid var(--line);border-radius:10px}
+.contrib-list .wanted th{position:sticky;top:0;background:var(--surface);z-index:1}
+@media (max-width:900px){.contrib-grid{grid-template-columns:1fr}.contrib-list{position:static}.contrib-list .wanted-wrap{max-height:none;border:0}}
 .wanted-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:6px}
 .wanted-tools input{flex:1 1 260px;min-width:0;font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
 .wanted{width:100%;border-collapse:collapse;font-size:14px}
@@ -589,27 +596,31 @@ img{max-width:100%}
 
 <!-- CONTRIBUTE -->
 <section id="v-contribute" class="view" hidden>
-  <article class="disc contrib">
-    <h1>Contribute full texts</h1>
-    <p class="prose">Every paper on this site can get a <b>paper card</b>: a structured summary of what the paper actually did (lattice, material, fabrication, state preparation, imaging and measurement, simulation, observables), where every value is backed by a one-sentence quote from the paper. Cards are made from the full text, and for the <b id="wantN">…</b> papers listed below we do not have it yet, mostly because they are not open access.</p>
-    <p class="prose">If you have the PDF of any of these papers, in particular your own, we would be grateful if you sent it.</p>
-    <h2>How to send a paper</h2>
-    <ol class="steps prose">
-      <li>Save the PDF under the name in the <b>Save as</b> column, for example <code>W1234567890.pdf</code>. Supplementary material goes in a second file, <code>W1234567890_SI.pdf</code>.</li>
-      <li>Email the file(s) to <span class="mail">info@artificialspinice.com</span>. Several papers in one email are fine; the <b>Send</b> link opens an email with the paper's name already in the subject.</li>
-    </ol>
-    <h2>What happens with the file</h2>
-    <ul class="prose">
-      <li>The full text of a closed-access paper is <b>never published or shared</b>. It is stored privately and used only to generate the paper card.</li>
-      <li>The site shows only the card (short facts, each with its one-sentence evidence quote and page) and links to the publisher and to free versions. PDFs are never hosted on the site.</li>
-      <li>An accepted manuscript or arXiv version is ideal. If you post one on arXiv or an institutional repository, the paper page will also link it as a free version.</li>
-    </ul>
-    <div class="fix"><span><b>Send to</b>&nbsp; <span class="mail">info@artificialspinice.com</span></span><button class="btn ghost sm" type="button" data-copy="info@artificialspinice.com">Copy address</button></div>
-    <h2>Papers we are looking for</h2>
-    <p class="meta">Most cited within the artificial spin ice literature first. The list updates itself when a card is added.</p>
-    <div class="wanted-tools"><input type="search" id="wantQ" placeholder="Filter by title, author, journal, year or ID" autocomplete="off" aria-label="Filter the list of wanted papers"><span class="meta" id="wantShown"></span></div>
-    <div class="wanted-wrap"><table class="wanted" id="wantTable"><thead><tr><th>Paper</th><th class="hide-s">Published in</th><th>Save as</th><th></th></tr></thead><tbody></tbody></table></div>
-  </article>
+  <div class="contrib-grid">
+    <article class="disc contrib-text">
+      <h1>Contribute full texts</h1>
+      <p class="prose">Every paper on this site can get a <b>paper card</b>: a structured summary of what the paper actually did (lattice, material, fabrication, state preparation, imaging and measurement, simulation, observables), where every value is backed by a one-sentence quote from the paper. Cards are made from the full text, and for the <b id="wantN">…</b> papers listed here we do not have it yet, mostly because they are not open access.</p>
+      <p class="prose">If you have the PDF of any of these papers, in particular your own, we would be grateful if you sent it.</p>
+      <h2>How to send a paper</h2>
+      <ol class="prose">
+        <li>Save the PDF under the name in the <b>Save as</b> column, for example <code>W1234567890.pdf</code>. Supplementary material goes in a second file, <code>W1234567890_SI.pdf</code>.</li>
+        <li>Email the file(s) to <span class="mail">info@artificialspinice.com</span>. Several papers in one email are fine; the <b>Send</b> link opens an email with the paper's name already in the subject.</li>
+      </ol>
+      <h2>What happens with the file</h2>
+      <ul class="prose">
+        <li>The full text of a closed-access paper is <b>never published or shared</b>. It is stored privately and used only to generate the paper card.</li>
+        <li>The site shows only the card (short facts, each with its one-sentence evidence quote and page) and links to the publisher and to free versions. PDFs are never hosted on the site.</li>
+        <li>An accepted manuscript or arXiv version is ideal. If you post one on arXiv or an institutional repository, the paper page will also link it as a free version.</li>
+      </ul>
+      <div class="fix"><span><b>Send to</b>&nbsp; <span class="mail">info@artificialspinice.com</span></span><button class="btn ghost sm" type="button" data-copy="info@artificialspinice.com">Copy address</button></div>
+    </article>
+    <section class="contrib-list" aria-label="Papers we are looking for">
+      <h2>Papers we are looking for</h2>
+      <p class="meta">Most cited within the artificial spin ice literature first. The list updates itself when a card is added.</p>
+      <div class="wanted-tools"><input type="search" id="wantQ" placeholder="Filter by title, author, journal, year or ID" autocomplete="off" aria-label="Filter the list of wanted papers"><span class="meta" id="wantShown"></span></div>
+      <div class="wanted-wrap" tabindex="0" aria-label="List of wanted papers (scrolls)"><table class="wanted" id="wantTable"><thead><tr><th>Paper</th><th class="hide-s">Published in</th><th>Save as</th><th></th></tr></thead><tbody></tbody></table></div>
+    </section>
+  </div>
 </section>
 
 <!-- PAPER -->
