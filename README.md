@@ -46,8 +46,9 @@ not yet been checked by a person.
   fill citation links OpenAlex lacks.
 - **[arXiv](https://arxiv.org)**: preprints and their abstracts (metadata CC0). ORCID and Semantic Scholar help
   find theses and free versions.
-- **The papers' own full texts** (open copies, read privately, never hosted here) for paper cards and for
-  citations that no database lists.
+- **The papers' own full texts** (open copies, and for closed-access papers PDFs from the curator or sent by
+  contributors; read privately, never shared or hosted here) for paper cards and for citations that no database
+  lists.
 - New papers are found every week and added only after the curator has reviewed them.
 
 ## Licences and reuse
@@ -56,7 +57,7 @@ not yet been checked by a person.
 - Figures are shown only from papers under an open licence (CC BY, BY-SA, BY-NC, BY-NC-SA, CC0), with credit,
   licence and a note that they are resized. Other papers link to where their figures can be seen.
 - Abstracts other than arXiv's belong to the publishers or authors and are shown to identify the paper.
-- Corresponding-author emails appear as printed in the papers. Authors can ask for removal by email.
+- Only corresponding authors' emails are shown, as printed in the papers or on their publisher pages. Authors can ask for removal by email.
 - Third-party components: IBM Plex and STIX Two fonts (SIL Open Font License, in `assets/fonts`) and
   [d3](https://d3js.org) (ISC licence).
 
