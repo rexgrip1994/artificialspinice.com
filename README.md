@@ -9,7 +9,7 @@ field, how they cite each other, and what each paper actually did.
 |---|---|
 | Works | 955 (incl. 74 theses and 59 reviews) |
 | Citation links within the field | 15,028 |
-| Paper cards | 665 |
+| Paper cards | 671 |
 | Last updated | October 19, 2026 (refreshed weekly) |
 
 This repository holds the **published, generated website** only. It is rebuilt automatically, so please do not
